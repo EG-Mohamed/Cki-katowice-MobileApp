@@ -308,4 +308,19 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get searchRadios => 'Szukaj stacji';
+
+  @override
+  String get testNotification => 'Wyślij powiadomienie testowe';
+
+  @override
+  String get testNotificationBody =>
+      'Tak będą wyglądać przypomnienia o modlitwie.';
+
+  @override
+  String get notificationPermissionDenied =>
+      'Wymagane jest pozwolenie na powiadomienia. Włącz je w ustawieniach systemu.';
+
+  @override
+  String get exactAlarmHint =>
+      'Aby przypomnienia były punktualne, zezwól tej aplikacji na \'Alarmy i przypomnienia\' w ustawieniach systemu.';
 }

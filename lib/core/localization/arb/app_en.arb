@@ -99,5 +99,9 @@
   "searchSurah": "Search surah",
   "noResults": "No results found.",
   "radioLive": "Live Quran radio stations",
-  "searchRadios": "Search stations"
+  "searchRadios": "Search stations",
+  "testNotification": "Send a test notification",
+  "testNotificationBody": "This is how prayer reminders will appear.",
+  "notificationPermissionDenied": "Notification permission is required. Please enable it in system settings.",
+  "exactAlarmHint": "For exact on-time reminders, allow 'Alarms & reminders' for this app in system settings."
 }

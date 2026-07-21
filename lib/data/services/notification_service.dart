@@ -29,8 +29,13 @@ class NotificationService {
   Future<void> init() async {
     if (_ready) return;
     tz.initializeTimeZones();
+    tz.setLocalLocation(tz.getLocation('Europe/Warsaw'));
     const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const iosInit = DarwinInitializationSettings();
+    const iosInit = DarwinInitializationSettings(
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
+    );
     await _plugin.initialize(
       const InitializationSettings(android: androidInit, iOS: iosInit),
     );
@@ -56,19 +61,35 @@ class NotificationService {
     );
   }
 
+  AndroidFlutterLocalNotificationsPlugin? get _android => _plugin
+      .resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin
+      >();
+
   Future<bool> requestPermission() async {
     await init();
-    final android = _plugin
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >();
     final iosGranted = await _plugin
         .resolvePlatformSpecificImplementation<
           IOSFlutterLocalNotificationsPlugin
         >()
         ?.requestPermissions(alert: true, badge: true, sound: true);
-    final androidGranted = await android?.requestNotificationsPermission();
+    final androidGranted = await _android?.requestNotificationsPermission();
+    await _android?.requestExactAlarmsPermission();
     return iosGranted ?? androidGranted ?? true;
+  }
+
+  Future<bool> canScheduleExactAlarms() async {
+    await init();
+    final result = await _android?.canScheduleExactNotifications();
+    return result ?? true;
+  }
+
+  Future<void> showTestNotification({
+    required String title,
+    required String body,
+  }) async {
+    await init();
+    await _plugin.show(9999, title, body, _details);
   }
 
   Future<void> scheduleForDay({
@@ -93,7 +114,7 @@ class NotificationService {
         titleFor(slot.name),
         tz.TZDateTime.from(when, tz.local),
         _details,
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
         matchDateTimeComponents: DateTimeComponents.time,

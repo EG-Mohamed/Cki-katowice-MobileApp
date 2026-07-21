@@ -39,6 +39,30 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
+  Future<void> _testNotification(BuildContext context) async {
+    final service = context.read<NotificationService>();
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final granted = await service.requestPermission();
+    if (!granted) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.notificationPermissionDenied)),
+      );
+      return;
+    }
+    await service.showTestNotification(
+      title: l10n.notificationTitle,
+      body: l10n.testNotificationBody,
+    );
+    if (!context.mounted) return;
+    final exact = await service.canScheduleExactAlarms();
+    if (!exact) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.exactAlarmHint)),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -106,6 +130,15 @@ class SettingsScreen extends StatelessWidget {
                         if (context.mounted) await _reschedule(context);
                       },
                     ),
+                  Divider(color: BrandColors.border, height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _testNotification(context),
+                      icon: const Icon(Icons.notifications_active_outlined),
+                      label: Text(l10n.testNotification),
+                    ),
+                  ),
                 ],
               ),
             ),

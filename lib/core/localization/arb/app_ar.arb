@@ -94,5 +94,9 @@
   "searchSurah": "ابحث عن سورة",
   "noResults": "لا توجد نتائج.",
   "radioLive": "إذاعات القرآن المباشرة",
-  "searchRadios": "ابحث عن محطة"
+  "searchRadios": "ابحث عن محطة",
+  "testNotification": "إرسال إشعار تجريبي",
+  "testNotificationBody": "هكذا ستظهر تذكيرات الصلاة.",
+  "notificationPermissionDenied": "إذن الإشعارات مطلوب. فعّله من إعدادات النظام.",
+  "exactAlarmHint": "لتذكيرات دقيقة في وقتها، اسمح لهذا التطبيق بـ 'التنبيهات والتذكيرات' في إعدادات النظام."
 }

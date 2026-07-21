@@ -305,4 +305,18 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get searchRadios => 'ابحث عن محطة';
+
+  @override
+  String get testNotification => 'إرسال إشعار تجريبي';
+
+  @override
+  String get testNotificationBody => 'هكذا ستظهر تذكيرات الصلاة.';
+
+  @override
+  String get notificationPermissionDenied =>
+      'إذن الإشعارات مطلوب. فعّله من إعدادات النظام.';
+
+  @override
+  String get exactAlarmHint =>
+      'لتذكيرات دقيقة في وقتها، اسمح لهذا التطبيق بـ \'التنبيهات والتذكيرات\' في إعدادات النظام.';
 }

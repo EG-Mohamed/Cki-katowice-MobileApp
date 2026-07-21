@@ -306,4 +306,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get searchRadios => 'Search stations';
+
+  @override
+  String get testNotification => 'Send a test notification';
+
+  @override
+  String get testNotificationBody =>
+      'This is how prayer reminders will appear.';
+
+  @override
+  String get notificationPermissionDenied =>
+      'Notification permission is required. Please enable it in system settings.';
+
+  @override
+  String get exactAlarmHint =>
+      'For exact on-time reminders, allow \'Alarms & reminders\' for this app in system settings.';
 }

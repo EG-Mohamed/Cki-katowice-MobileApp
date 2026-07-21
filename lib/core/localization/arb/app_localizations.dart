@@ -669,6 +669,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Search stations'**
   String get searchRadios;
+
+  /// No description provided for @testNotification.
+  ///
+  /// In en, this message translates to:
+  /// **'Send a test notification'**
+  String get testNotification;
+
+  /// No description provided for @testNotificationBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This is how prayer reminders will appear.'**
+  String get testNotificationBody;
+
+  /// No description provided for @notificationPermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification permission is required. Please enable it in system settings.'**
+  String get notificationPermissionDenied;
+
+  /// No description provided for @exactAlarmHint.
+  ///
+  /// In en, this message translates to:
+  /// **'For exact on-time reminders, allow \'Alarms & reminders\' for this app in system settings.'**
+  String get exactAlarmHint;
 }
 
 class _AppLocalizationsDelegate

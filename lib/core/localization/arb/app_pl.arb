@@ -94,5 +94,9 @@
   "searchSurah": "Szukaj sury",
   "noResults": "Brak wyników.",
   "radioLive": "Radia Koranu na żywo",
-  "searchRadios": "Szukaj stacji"
+  "searchRadios": "Szukaj stacji",
+  "testNotification": "Wyślij powiadomienie testowe",
+  "testNotificationBody": "Tak będą wyglądać przypomnienia o modlitwie.",
+  "notificationPermissionDenied": "Wymagane jest pozwolenie na powiadomienia. Włącz je w ustawieniach systemu.",
+  "exactAlarmHint": "Aby przypomnienia były punktualne, zezwól tej aplikacji na 'Alarmy i przypomnienia' w ustawieniach systemu."
 }
