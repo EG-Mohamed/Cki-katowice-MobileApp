@@ -124,7 +124,7 @@ class SettingsScreen extends StatelessWidget {
             const SizedBox(height: 28),
             SectionHeader(title: l10n.quickActions),
             const SizedBox(height: 12),
-            const _Card(child: _QuickAccess()),
+            _Card(child: _QuickAccess()),
             const SizedBox(height: 28),
             SectionHeader(title: l10n.about),
             const SizedBox(height: 12),
@@ -150,6 +150,7 @@ class _NotificationStatus extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     final l10n = AppLocalizations.of(context);
     final (icon, color, message) = switch (status.syncState) {
       PrayerNotificationSyncState.syncing => (
@@ -222,6 +223,7 @@ class _CreditFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     return Center(
       child: InkWell(
         borderRadius: BorderRadius.circular(8),
@@ -273,6 +275,7 @@ class _LanguagePicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     final options = [
       (const Locale('en'), l10n.english),
       (const Locale('pl'), l10n.polish),
@@ -329,6 +332,7 @@ class _ToggleRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     return Row(
       children: [
         Expanded(
@@ -357,6 +361,7 @@ class _QuickAccess extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     final l10n = AppLocalizations.of(context);
     final entries = [
       _QuickEntry(Icons.explore_outlined, l10n.qiblaDirection, '/qibla', true),
@@ -394,6 +399,7 @@ class _QuickRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     return InkWell(
       borderRadius: BorderRadius.circular(12),
       onTap: () => entry.push
@@ -441,6 +447,7 @@ class _Card extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
