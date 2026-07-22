@@ -65,11 +65,11 @@ class MiniPlayer extends StatelessWidget {
       },
       child: Material(
         color: BrandColors.surface,
-        elevation: 8,
-        shadowColor: BrandColors.textPrimary.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(16),
+        elevation: 6,
+        shadowColor: BrandColors.textPrimary.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(18),
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
           onTap: () {
             if (isRadio || surah == null) {
               onOpenRadio();
@@ -77,114 +77,115 @@ class MiniPlayer extends StatelessWidget {
               onOpenSurah(surah.id);
             }
           },
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: BrandColors.border),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(16),
-                  ),
-                  child: ValueListenableBuilder<PlaybackProgress>(
-                    valueListenable: controller.progress,
-                    builder: (context, value, _) => LinearProgressIndicator(
-                      value: value.value,
-                      minHeight: 3,
-                      backgroundColor: BrandColors.border,
-                      color: BrandColors.accent,
-                    ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(18),
+                ),
+                child: ValueListenableBuilder<PlaybackProgress>(
+                  valueListenable: controller.progress,
+                  builder: (context, value, _) => LinearProgressIndicator(
+                    value: value.value,
+                    minHeight: 2.5,
+                    backgroundColor: BrandColors.surfaceMuted,
+                    color: BrandColors.accent,
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 8, 6, 8),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: BrandColors.accentSoft,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(
-                          isRadio ? Icons.radio : Icons.graphic_eq,
-                          color: BrandColors.accent,
-                          size: 20,
-                        ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: BrandColors.accentSoft,
+                        borderRadius: BorderRadius.circular(11),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
+                      child: Icon(
+                        isRadio ? Icons.radio : Icons.graphic_eq,
+                        color: BrandColors.accent,
+                        size: 18,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: isRadio
+                                ? TextStyle(
+                                    color: BrandColors.textPrimary,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  )
+                                : AppTheme.arabicQuran(
+                                    size: 16,
+                                    color: BrandColors.textPrimary,
+                                  ).copyWith(height: 1.2),
+                          ),
+                          if (subtitle.isNotEmpty)
                             Text(
-                              title,
+                              subtitle,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: isRadio
-                                  ? TextStyle(
-                                      color: BrandColors.textPrimary,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                    )
-                                  : AppTheme.arabicQuran(
-                                      size: 16,
-                                      color: BrandColors.textPrimary,
-                                    ).copyWith(height: 1.2),
-                            ),
-                            if (subtitle.isNotEmpty)
-                              Text(
-                                subtitle,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: BrandColors.textMuted,
-                                  fontSize: 11,
-                                ),
+                              style: TextStyle(
+                                color: BrandColors.textMuted,
+                                fontSize: 11,
                               ),
-                          ],
-                        ),
+                            ),
+                        ],
                       ),
-                      if (!isRadio)
-                        IconButton(
-                          onPressed: controller.hasPrevious
-                              ? controller.previous
-                              : null,
-                          icon: const Icon(Icons.skip_previous),
-                          color: BrandColors.textSecondary,
-                        ),
+                    ),
+                    if (!isRadio)
                       IconButton(
-                        onPressed: controller.isRadio
-                            ? controller.stop
-                            : controller.togglePlayPause,
-                        icon: Icon(
-                          controller.isRadio
-                              ? Icons.stop
-                              : (controller.isPlaying
-                                    ? Icons.pause
-                                    : Icons.play_arrow),
-                        ),
-                        color: BrandColors.primary,
+                        visualDensity: VisualDensity.compact,
+                        onPressed: controller.hasPrevious
+                            ? controller.previous
+                            : null,
+                        icon: const Icon(Icons.skip_previous),
+                        color: BrandColors.textSecondary,
                       ),
-                      if (!isRadio)
-                        IconButton(
-                          onPressed: controller.hasNext
-                              ? controller.next
-                              : null,
-                          icon: const Icon(Icons.skip_next),
-                          color: BrandColors.textSecondary,
+                    Container(
+                      decoration: BoxDecoration(
+                        color: BrandColors.primary,
+                        shape: BoxShape.circle,
+                      ),
+                      child: IconButton(
+                        visualDensity: VisualDensity.compact,
+                        onPressed: controller.togglePlayPause,
+                        icon: Icon(
+                          controller.isPlaying ? Icons.pause : Icons.play_arrow,
                         ),
-                    ],
-                  ),
+                        color: BrandColors.onPrimary,
+                      ),
+                    ),
+                    if (!isRadio)
+                      IconButton(
+                        visualDensity: VisualDensity.compact,
+                        onPressed: controller.hasNext ? controller.next : null,
+                        icon: const Icon(Icons.skip_next),
+                        color: BrandColors.textSecondary,
+                      ),
+                    IconButton(
+                      visualDensity: VisualDensity.compact,
+                      onPressed: controller.stop,
+                      icon: const Icon(Icons.close),
+                      color: BrandColors.textMuted,
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

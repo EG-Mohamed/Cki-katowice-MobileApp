@@ -8,6 +8,7 @@ import '../../core/theme/brand_colors.dart';
 import '../../data/models/content.dart';
 import '../../data/services/news_service.dart';
 import '../../shared/widgets/app_background.dart';
+import '../../shared/widgets/app_header.dart';
 import '../../state/theme_controller.dart';
 
 class NewsDetailScreen extends StatefulWidget {
@@ -57,11 +58,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
             final date = DateFormat.yMMMMEEEEd(locale).format(item.date);
             return CustomScrollView(
               slivers: [
-                SliverAppBar(
-                  pinned: true,
-                  backgroundColor: Colors.transparent,
-                  leading: const BackButton(),
-                ),
+                const AppHeader.detail(),
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(24, 0, 24, 28),

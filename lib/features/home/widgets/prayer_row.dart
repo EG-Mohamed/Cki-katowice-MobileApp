@@ -39,13 +39,22 @@ class PrayerRow extends StatelessWidget {
     final highlight = isJumuah || isNext;
     final tint = isJumuah ? BrandColors.accent : BrandColors.primary;
     return Container(
-      padding: const EdgeInsets.fromLTRB(10, 8, 8, 8),
+      padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
       decoration: BoxDecoration(
         color: highlight ? tint.withValues(alpha: 0.08) : BrandColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: highlight ? tint.withValues(alpha: 0.28) : BrandColors.border,
-        ),
+        borderRadius: BorderRadius.circular(18),
+        border: highlight
+            ? Border.all(color: tint.withValues(alpha: 0.26))
+            : null,
+        boxShadow: highlight
+            ? null
+            : [
+                BoxShadow(
+                  color: BrandColors.textPrimary.withValues(alpha: 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
       ),
       child: Row(
         children: [
@@ -111,16 +120,16 @@ class _PrayerIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     context.watch<ThemeController>();
     return Container(
-      width: 36,
-      height: 36,
+      width: 40,
+      height: 40,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: active ? tint.withValues(alpha: 0.14) : BrandColors.surfaceMuted,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(13),
       ),
       child: Icon(
         _iconFor(name),
-        size: 18,
+        size: 19,
         color: active ? tint : BrandColors.textMuted,
       ),
     );

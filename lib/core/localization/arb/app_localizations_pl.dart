@@ -319,6 +319,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get radioLive => 'Radia Koranu na żywo';
 
   @override
+  String get radioCairoQuran => 'Radio Koranu - Kair';
+
+  @override
   String get searchRadios => 'Szukaj stacji';
 
   @override

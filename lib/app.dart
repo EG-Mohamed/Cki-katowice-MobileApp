@@ -90,7 +90,7 @@ class _CkiAppState extends State<CkiApp> {
                       bottom: 0,
                       child: MiniPlayer(
                         onOpenSurah: (id) => _router.go('/quran/$id'),
-                        onOpenRadio: () => _router.push('/now-playing'),
+                        onOpenRadio: () => _router.go('/radio'),
                       ),
                     ),
                   ],

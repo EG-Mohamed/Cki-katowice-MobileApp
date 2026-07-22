@@ -318,6 +318,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get radioLive => 'Live Quran radio stations';
 
   @override
+  String get radioCairoQuran => 'Holy Quran Radio - Cairo';
+
+  @override
   String get searchRadios => 'Search stations';
 
   @override

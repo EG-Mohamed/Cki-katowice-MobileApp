@@ -7,6 +7,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/theme/brand_colors.dart';
 import '../../core/utils/hijri_date.dart';
 import '../../shared/widgets/app_background.dart';
+import '../../shared/widgets/app_header.dart';
 import '../../shared/widgets/section_header.dart';
 import '../../state/locale_controller.dart';
 import '../../state/prayer_controller.dart';
@@ -47,23 +48,32 @@ class HomeScreen extends StatelessWidget {
         child: day == null
             ? RefreshIndicator(
                 onRefresh: () => _loadDate(context, controller.selectedDate),
-                child: LayoutBuilder(
-                  builder: (context, constraints) => ListView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    children: [
-                      SizedBox(
-                        height: constraints.maxHeight,
-                        child: Center(
-                          child: Text(
-                            controller.hasError
-                                ? l10n.prayerTimesUnavailable
-                                : l10n.loading,
-                            style: TextStyle(color: BrandColors.textMuted),
-                          ),
+                child: CustomScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  slivers: [
+                    AppHeader.root(
+                      titleWidget: const _Greeting(),
+                      toolbarHeight: 64,
+                      actions: [
+                        _LanguageButton(
+                          onSelected: (locale) =>
+                              _changeLocale(context, locale),
+                        ),
+                        const SizedBox(width: 12),
+                      ],
+                    ),
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Center(
+                        child: Text(
+                          controller.hasError
+                              ? l10n.prayerTimesUnavailable
+                              : l10n.loading,
+                          style: TextStyle(color: BrandColors.textMuted),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               )
             : RefreshIndicator(
@@ -71,12 +81,16 @@ class HomeScreen extends StatelessWidget {
                 child: CustomScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   slivers: [
-                    SliverToBoxAdapter(
-                      child: _Greeting(
-                        l10n: l10n,
-                        onLocaleSelected: (locale) =>
-                            _changeLocale(context, locale),
-                      ),
+                    AppHeader.root(
+                      titleWidget: const _Greeting(),
+                      toolbarHeight: 64,
+                      actions: [
+                        _LanguageButton(
+                          onSelected: (locale) =>
+                              _changeLocale(context, locale),
+                        ),
+                        const SizedBox(width: 12),
+                      ],
                     ),
                     const SliverToBoxAdapter(child: NextPrayerHero()),
                     SliverPadding(
@@ -113,7 +127,7 @@ class HomeScreen extends StatelessWidget {
                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
                       sliver: SliverList.separated(
                         itemCount: day.slots.length,
-                        separatorBuilder: (_, _) => const SizedBox(height: 8),
+                        separatorBuilder: (_, _) => const SizedBox(height: 10),
                         itemBuilder: (context, i) {
                           final slot = day.slots[i];
                           return PrayerRow(
@@ -137,13 +151,12 @@ class HomeScreen extends StatelessWidget {
 }
 
 class _Greeting extends StatelessWidget {
-  const _Greeting({required this.l10n, required this.onLocaleSelected});
-  final AppLocalizations l10n;
-  final ValueChanged<Locale> onLocaleSelected;
+  const _Greeting();
 
   @override
   Widget build(BuildContext context) {
     context.watch<ThemeController>();
+    final l10n = AppLocalizations.of(context);
     final languageCode = Localizations.localeOf(context).languageCode;
     final locale = Localizations.localeOf(context).toLanguageTag();
     final now = DateTime.now();
@@ -153,43 +166,39 @@ class _Greeting extends StatelessWidget {
     final name = site?.name.isNotEmpty == true ? site!.name : l10n.mosqueName;
     final logo = site?.logo ?? '';
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(18, 14, 18, 4),
-      child: Row(
-        children: [
-          _Logo(logo: logo),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTheme.display(context, size: 17).copyWith(
-                    color: BrandColors.primary,
-                    fontWeight: FontWeight.w800,
-                    height: 1.15,
-                  ),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        _Logo(logo: logo),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTheme.display(context, size: 16).copyWith(
+                  color: BrandColors.primary,
+                  fontWeight: FontWeight.w800,
                 ),
-                const SizedBox(height: 3),
-                Text(
-                  '$hijri  ·  $gregorian',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: BrandColors.textSecondary,
-                    fontSize: 11,
-                  ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                '$hijri  ·  $gregorian',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: BrandColors.textSecondary,
+                  fontSize: 11,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          const SizedBox(width: 8),
-          _LanguageButton(onSelected: onLocaleSelected),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -305,8 +314,14 @@ class _ScheduleHeader extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           decoration: BoxDecoration(
             color: BrandColors.surface,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: BrandColors.border),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: BrandColors.textPrimary.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
           child: Row(
             children: [

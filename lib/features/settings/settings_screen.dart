@@ -5,7 +5,6 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/localization/arb/app_localizations.dart';
-import '../../core/theme/app_theme.dart';
 import '../../core/theme/brand_colors.dart';
 import '../../core/utils/prayer_labels.dart';
 import '../../state/locale_controller.dart';
@@ -15,6 +14,7 @@ import '../../state/prayer_notification_coordinator.dart';
 import '../../state/settings_controller.dart';
 import '../../state/theme_controller.dart';
 import '../../shared/widgets/app_background.dart';
+import '../../shared/widgets/app_header.dart';
 import '../../shared/widgets/section_header.dart';
 import 'widgets/about_section.dart';
 
@@ -31,114 +31,120 @@ class SettingsScreen extends StatelessWidget {
 
     return AppBackground(
       child: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
-          children: [
-            Text(l10n.settings, style: AppTheme.display(context, size: 30)),
-            const SizedBox(height: 24),
-            SectionHeader(title: l10n.language),
-            const SizedBox(height: 12),
-            _LanguagePicker(
-              current: locale.locale,
-              onSelect: (value) async {
-                await locale.setLocale(value);
-                if (context.mounted) {
-                  await context.read<PrayerController>().load();
-                }
-              },
-              l10n: l10n,
-            ),
-            const SizedBox(height: 28),
-            SectionHeader(title: l10n.appearance),
-            const SizedBox(height: 12),
-            _Card(
-              child: _ToggleRow(
-                title: l10n.darkMode,
-                subtitle: l10n.darkModeDesc,
-                value: theme.isDark,
-                onChanged: theme.setDark,
-              ),
-            ),
-            const SizedBox(height: 28),
-            SectionHeader(title: l10n.notifications),
-            const SizedBox(height: 12),
-            _Card(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            AppHeader.root(title: l10n.settings),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+              sliver: SliverList.list(
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 42,
-                        height: 42,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: BrandColors.accentSoft,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          Icons.notifications_active_outlined,
-                          color: BrandColors.accent,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                  SectionHeader(title: l10n.language),
+                  const SizedBox(height: 12),
+                  _LanguagePicker(
+                    current: locale.locale,
+                    onSelect: (value) async {
+                      await locale.setLocale(value);
+                      if (context.mounted) {
+                        await context.read<PrayerController>().load();
+                      }
+                    },
+                    l10n: l10n,
+                  ),
+                  const SizedBox(height: 28),
+                  SectionHeader(title: l10n.appearance),
+                  const SizedBox(height: 12),
+                  _Card(
+                    child: _ToggleRow(
+                      title: l10n.darkMode,
+                      subtitle: l10n.darkModeDesc,
+                      value: theme.isDark,
+                      onChanged: theme.setDark,
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  SectionHeader(title: l10n.notifications),
+                  const SizedBox(height: 12),
+                  _Card(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
                           children: [
-                            Text(
-                              l10n.prayerNotifications,
-                              style: TextStyle(
-                                color: BrandColors.textPrimary,
-                                fontWeight: FontWeight.w700,
+                            Container(
+                              width: 42,
+                              height: 42,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: BrandColors.accentSoft,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Icon(
+                                Icons.notifications_active_outlined,
+                                color: BrandColors.accent,
                               ),
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              l10n.prayerNotificationsDesc,
-                              style: TextStyle(
-                                color: BrandColors.textMuted,
-                                fontSize: 12,
-                                height: 1.35,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    l10n.prayerNotifications,
+                                    style: TextStyle(
+                                      color: BrandColors.textPrimary,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    l10n.prayerNotificationsDesc,
+                                    style: TextStyle(
+                                      color: BrandColors.textMuted,
+                                      fontSize: 12,
+                                      height: 1.35,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
                         ),
-                      ),
-                    ],
+                        Divider(color: BrandColors.border, height: 24),
+                        _NotificationStatus(
+                          status: notif.status,
+                          onFix:
+                              notif.status.permission ==
+                                  PrayerNotificationPermission.denied
+                              ? () async {
+                                  await openAppSettings();
+                                }
+                              : (!notif.status.exactAlarmAvailable
+                                    ? notif.requestExactAlarmAccess
+                                    : null),
+                        ),
+                        Divider(color: BrandColors.border, height: 24),
+                        _PrayerMuteList(notif: notif, l10n: l10n),
+                      ],
+                    ),
                   ),
-                  Divider(color: BrandColors.border, height: 24),
-                  _NotificationStatus(
-                    status: notif.status,
-                    onFix:
-                        notif.status.permission ==
-                            PrayerNotificationPermission.denied
-                        ? () async {
-                            await openAppSettings();
-                          }
-                        : (!notif.status.exactAlarmAvailable
-                              ? notif.requestExactAlarmAccess
-                              : null),
+                  const SizedBox(height: 28),
+                  SectionHeader(title: l10n.quickActions),
+                  const SizedBox(height: 12),
+                  _Card(child: _QuickAccess()),
+                  const SizedBox(height: 28),
+                  SectionHeader(title: l10n.about),
+                  const SizedBox(height: 12),
+                  AboutSection(
+                    settings: site,
+                    fallbackName: l10n.mosqueName,
+                    fallbackBody: l10n.aboutBody,
                   ),
-                  Divider(color: BrandColors.border, height: 24),
-                  _PrayerMuteList(notif: notif, l10n: l10n),
+                  const SizedBox(height: 24),
+                  const _CreditFooter(),
                 ],
               ),
             ),
-            const SizedBox(height: 28),
-            SectionHeader(title: l10n.quickActions),
-            const SizedBox(height: 12),
-            _Card(child: _QuickAccess()),
-            const SizedBox(height: 28),
-            SectionHeader(title: l10n.about),
-            const SizedBox(height: 12),
-            AboutSection(
-              settings: site,
-              fallbackName: l10n.mosqueName,
-              fallbackBody: l10n.aboutBody,
-            ),
-            const SizedBox(height: 24),
-            const _CreditFooter(),
           ],
         ),
       ),

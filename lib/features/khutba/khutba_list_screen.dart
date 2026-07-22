@@ -9,6 +9,7 @@ import '../../core/theme/brand_colors.dart';
 import '../../data/models/content.dart';
 import '../../data/services/khutba_service.dart';
 import '../../shared/widgets/app_background.dart';
+import '../../shared/widgets/app_header.dart';
 import '../../shared/widgets/geometric_pattern.dart';
 import '../../shared/widgets/section_header.dart';
 import '../../state/theme_controller.dart';
@@ -92,12 +93,7 @@ class _KhutbaListScreenState extends State<KhutbaListScreen> {
               child: CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
-                  SliverAppBar(
-                    pinned: true,
-                    backgroundColor: Colors.transparent,
-                    leading: const BackButton(),
-                    title: Text(l10n.khutbaTitle),
-                  ),
+                  AppHeader.detail(title: l10n.khutbaTitle),
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
                     sliver: SliverList(

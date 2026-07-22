@@ -6,6 +6,7 @@ import '../../core/theme/brand_colors.dart';
 import '../../data/models/mp3quran.dart';
 import '../../data/services/mp3quran_service.dart';
 import '../../shared/widgets/app_background.dart';
+import '../../shared/widgets/app_header.dart';
 import '../../state/quran_player_controller.dart';
 import '../../state/theme_controller.dart';
 
@@ -69,23 +70,29 @@ class _ReciterPickerScreenState extends State<ReciterPickerScreen> {
               return const Center(child: CircularProgressIndicator());
             }
             if (snapshot.hasError || !snapshot.hasData) {
-              return _Scaffold(
-                title: l10n.selectReciter,
-                child: Center(
-                  child: Text(
-                    l10n.recitersUnavailable,
-                    style: TextStyle(color: BrandColors.textMuted),
+              return CustomScrollView(
+                slivers: [
+                  AppHeader.detail(title: l10n.selectReciter),
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Center(
+                      child: Text(
+                        l10n.recitersUnavailable,
+                        style: TextStyle(color: BrandColors.textMuted),
+                      ),
+                    ),
                   ),
-                ),
+                ],
               );
             }
             final data = snapshot.data!;
             final reciters = _filter(data.reciters);
-            return _Scaffold(
-              title: l10n.selectReciter,
-              child: Column(
-                children: [
-                  Padding(
+            return CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                AppHeader.detail(title: l10n.selectReciter),
+                SliverToBoxAdapter(
+                  child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
                     child: TextField(
                       decoration: InputDecoration(
@@ -107,8 +114,10 @@ class _ReciterPickerScreenState extends State<ReciterPickerScreen> {
                           setState(() => _search = value.trim().toLowerCase()),
                     ),
                   ),
-                  if (data.riwayat.isNotEmpty)
-                    SizedBox(
+                ),
+                if (data.riwayat.isNotEmpty)
+                  SliverToBoxAdapter(
+                    child: SizedBox(
                       height: 42,
                       child: ListView(
                         scrollDirection: Axis.horizontal,
@@ -129,21 +138,21 @@ class _ReciterPickerScreenState extends State<ReciterPickerScreen> {
                         ],
                       ),
                     ),
-                  Expanded(
-                    child: ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
-                      itemCount: reciters.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 10),
-                      itemBuilder: (context, i) => _ReciterTile(
-                        reciter: reciters[i],
-                        riwayahFilter: _riwayahFilter,
-                        onSelect: (moshaf) =>
-                            _select(reciters[i], moshaf, data.suwar),
-                      ),
+                  ),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
+                  sliver: SliverList.separated(
+                    itemCount: reciters.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 10),
+                    itemBuilder: (context, i) => _ReciterTile(
+                      reciter: reciters[i],
+                      riwayahFilter: _riwayahFilter,
+                      onSelect: (moshaf) =>
+                          _select(reciters[i], moshaf, data.suwar),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             );
           },
         ),
@@ -173,33 +182,6 @@ class _ReciterData {
   final List<Reciter> reciters;
   final List<Riwayah> riwayat;
   final List<MoshafSurah> suwar;
-}
-
-class _Scaffold extends StatelessWidget {
-  const _Scaffold({required this.title, required this.child});
-
-  final String title;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    context.watch<ThemeController>();
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(4, 4, 16, 4),
-          child: Row(
-            children: [
-              BackButton(color: BrandColors.textPrimary),
-              const SizedBox(width: 4),
-              Text(title, style: Theme.of(context).textTheme.titleLarge),
-            ],
-          ),
-        ),
-        Expanded(child: child),
-      ],
-    );
-  }
 }
 
 class _RiwayahChip extends StatelessWidget {

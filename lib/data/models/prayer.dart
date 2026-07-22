@@ -30,7 +30,11 @@ class DailyPrayers {
     return DailyPrayers(
       date: date,
       slots: [
-        PrayerSlot(name: PrayerName.fajr, time: _timeFromNested(json['fajr'])),
+        PrayerSlot(
+          name: PrayerName.fajr,
+          time: _timeFromNested(json['fajr']),
+          iqamah: _timeFromNestedOrNull(json['fajr'], 'iqamah'),
+        ),
         PrayerSlot(
           name: PrayerName.sunrise,
           time: _timeFromValue(json['sunrise']),
@@ -46,13 +50,23 @@ class DailyPrayers {
           PrayerSlot(
             name: PrayerName.dhuhr,
             time: _timeFromNested(json['dhuhr']),
+            iqamah: _timeFromNestedOrNull(json['dhuhr'], 'iqamah'),
           ),
-        PrayerSlot(name: PrayerName.asr, time: _timeFromNested(json['asr'])),
+        PrayerSlot(
+          name: PrayerName.asr,
+          time: _timeFromNested(json['asr']),
+          iqamah: _timeFromNestedOrNull(json['asr'], 'iqamah'),
+        ),
         PrayerSlot(
           name: PrayerName.maghrib,
           time: _timeFromNested(json['maghrib']),
+          iqamah: _timeFromNestedOrNull(json['maghrib'], 'iqamah'),
         ),
-        PrayerSlot(name: PrayerName.isha, time: _timeFromNested(json['isha'])),
+        PrayerSlot(
+          name: PrayerName.isha,
+          time: _timeFromNested(json['isha']),
+          iqamah: _timeFromNestedOrNull(json['isha'], 'iqamah'),
+        ),
       ],
     );
   }

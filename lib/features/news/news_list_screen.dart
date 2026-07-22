@@ -10,6 +10,7 @@ import '../../core/theme/brand_colors.dart';
 import '../../data/models/content.dart';
 import '../../data/services/news_service.dart';
 import '../../shared/widgets/app_background.dart';
+import '../../shared/widgets/app_header.dart';
 import '../../state/theme_controller.dart';
 
 class NewsListScreen extends StatefulWidget {
@@ -158,11 +159,7 @@ class _NewsListScreenState extends State<NewsListScreen> {
             controller: _controller,
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
-              SliverAppBar(
-                pinned: true,
-                backgroundColor: Colors.transparent,
-                title: Text(l10n.newsAnnouncements),
-              ),
+              AppHeader.root(title: l10n.newsAnnouncements),
               SliverToBoxAdapter(
                 child: _NewsFilters(
                   controller: _searchController,

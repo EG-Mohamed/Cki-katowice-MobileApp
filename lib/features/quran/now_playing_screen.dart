@@ -45,7 +45,7 @@ class NowPlayingScreen extends StatelessWidget {
                     ),
                     const Spacer(),
                     Text(
-                      controller.isRadio ? l10n.radios : l10n.nowPlaying,
+                      l10n.nowPlaying,
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 13,
@@ -58,10 +58,6 @@ class NowPlayingScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
-                child: _ModeToggle(controller: controller, l10n: l10n),
-              ),
               Expanded(
                 child: surah == null
                     ? Center(
@@ -69,17 +65,13 @@ class NowPlayingScreen extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
-                              controller.isRadio
-                                  ? Icons.radio
-                                  : Icons.menu_book,
+                              Icons.menu_book,
                               color: Colors.white,
                               size: 64,
                             ),
                             const SizedBox(height: 20),
                             Text(
-                              controller.isRadio
-                                  ? (controller.radioName ?? l10n.radios)
-                                  : l10n.noReciterSelected,
+                              l10n.noReciterSelected,
                               textAlign: TextAlign.center,
                               style: const TextStyle(
                                 color: Colors.white,
@@ -127,41 +119,6 @@ class NowPlayingScreen extends StatelessWidget {
   }
 }
 
-class _ModeToggle extends StatelessWidget {
-  const _ModeToggle({required this.controller, required this.l10n});
-
-  final QuranPlayerController controller;
-  final AppLocalizations l10n;
-
-  @override
-  Widget build(BuildContext context) {
-    final isRadio = controller.isRadio;
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(30),
-      ),
-      child: Row(
-        children: [
-          _Segment(
-            icon: Icons.menu_book,
-            label: l10n.navQuran,
-            selected: !isRadio,
-            onTap: () => context.go('/quran'),
-          ),
-          _Segment(
-            icon: Icons.radio,
-            label: l10n.radios,
-            selected: isRadio,
-            onTap: () => context.go('/radio'),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _ArtworkIcon extends StatelessWidget {
   const _ArtworkIcon();
 
@@ -183,58 +140,6 @@ class _ArtworkIcon extends StatelessWidget {
         isPlaying ? Icons.graphic_eq : Icons.menu_book,
         color: Colors.white,
         size: 56,
-      ),
-    );
-  }
-}
-
-class _Segment extends StatelessWidget {
-  const _Segment({
-    required this.icon,
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    context.watch<ThemeController>();
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 9),
-          decoration: BoxDecoration(
-            color: selected ? Colors.white : Colors.transparent,
-            borderRadius: BorderRadius.circular(26),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                size: 17,
-                color: selected ? BrandColors.primary : Colors.white,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  color: selected ? BrandColors.primary : Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

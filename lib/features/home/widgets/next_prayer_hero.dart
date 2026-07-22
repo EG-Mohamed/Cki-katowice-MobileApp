@@ -16,6 +16,7 @@ class NextPrayerHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     final l10n = AppLocalizations.of(context);
     final controller = context.watch<PrayerController>();
     final next = controller.nextPrayer;
@@ -27,9 +28,9 @@ class NextPrayerHero extends StatelessWidget {
     final locale = Localizations.localeOf(context).toLanguageTag();
     final timeLabel = DateFormat.Hm(locale).format(next.dateTimeOn(day.date));
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         child: Stack(
           children: [
             Positioned.fill(
@@ -40,16 +41,16 @@ class NextPrayerHero extends StatelessWidget {
             const Positioned.fill(
               child: GeometricPattern(
                 color: Colors.white,
-                opacity: 0.06,
-                cell: 46,
+                opacity: 0.07,
+                cell: 44,
               ),
             ),
             Positioned(
-              right: -30,
-              top: -30,
+              right: -26,
+              top: -26,
               child: Container(
-                width: 118,
-                height: 118,
+                width: 110,
+                height: 110,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: AppGradients.glow,
@@ -57,65 +58,44 @@ class NextPrayerHero extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+              padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+              child: Row(
                 children: [
-                  Text(
-                    l10n.nextPrayer.toUpperCase(),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.78),
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Center(
-                    child: Wrap(
-                      alignment: WrapAlignment.center,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 8,
-                      runSpacing: 4,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          prayerLabel(l10n, next.name),
-                          textAlign: TextAlign.center,
-                          style: AppTheme.display(context, size: 24).copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w800,
-                            height: 1.0,
+                          l10n.nextPrayer.toUpperCase(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.75),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.4,
                           ),
                         ),
-                        _TimePill(label: timeLabel),
+                        const SizedBox(height: 4),
+                        Text(
+                          prayerLabel(l10n, next.name),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTheme.display(context, size: 22).copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            height: 1.05,
+                          ),
+                        )
                       ],
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.14),
-                        ),
-                      ),
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: ValueListenableBuilder<Duration>(
-                          valueListenable: controller.remainingListenable,
-                          builder: (context, remaining, _) =>
-                              _Countdown(remaining: remaining),
-                        ),
-                      ),
-                    ),
+                  const SizedBox(width: 12),
+                  ValueListenableBuilder<Duration>(
+                    valueListenable: controller.remainingListenable,
+                    builder: (context, remaining, _) =>
+                        _Countdown(remaining: remaining),
                   ),
                 ],
               ),
@@ -136,7 +116,7 @@ class _TimePill extends StatelessWidget {
   Widget build(BuildContext context) {
     context.watch<ThemeController>();
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: BrandColors.accentLight.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(20),
@@ -145,7 +125,7 @@ class _TimePill extends StatelessWidget {
         label,
         style: TextStyle(
           color: BrandColors.accentLight,
-          fontSize: 14,
+          fontSize: 13,
           fontWeight: FontWeight.w700,
           fontFeatures: const [FontFeature.tabularFigures()],
         ),
@@ -163,12 +143,20 @@ class _Countdown extends StatelessWidget {
     final h = remaining.inHours;
     final m = remaining.inMinutes % 60;
     final s = remaining.inSeconds % 60;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      textDirection: TextDirection.ltr,
-      crossAxisAlignment: CrossAxisAlignment.baseline,
-      textBaseline: TextBaseline.alphabetic,
-      children: [_unit(h), _sep(), _unit(m), _sep(), _unit(s)],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        textDirection: TextDirection.ltr,
+        crossAxisAlignment: CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
+        children: [_unit(h), _sep(), _unit(m), _sep(), _unit(s)],
+      ),
     );
   }
 
@@ -177,7 +165,7 @@ class _Countdown extends StatelessWidget {
       value.toString().padLeft(2, '0'),
       style: TextStyle(
         color: Colors.white,
-        fontSize: 34,
+        fontSize: 22,
         fontWeight: FontWeight.w700,
         height: 1.0,
         fontFeatures: const [FontFeature.tabularFigures()],
@@ -186,12 +174,12 @@ class _Countdown extends StatelessWidget {
   }
 
   Widget _sep() => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 6),
+    padding: const EdgeInsets.symmetric(horizontal: 3),
     child: Text(
       ':',
       style: TextStyle(
-        color: Colors.white.withValues(alpha: 0.5),
-        fontSize: 30,
+        color: Colors.white.withValues(alpha: 0.45),
+        fontSize: 18,
         fontWeight: FontWeight.w400,
       ),
     ),

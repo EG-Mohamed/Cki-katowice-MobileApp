@@ -317,6 +317,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get radioLive => 'إذاعات القرآن المباشرة';
 
   @override
+  String get radioCairoQuran => 'إذاعة القرآن الكريم - القاهرة';
+
+  @override
   String get searchRadios => 'ابحث عن محطة';
 
   @override

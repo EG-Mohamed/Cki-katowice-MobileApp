@@ -11,6 +11,7 @@ import '../../core/theme/brand_colors.dart';
 import '../../data/models/content.dart';
 import '../../data/services/quran_service.dart';
 import '../../shared/widgets/app_background.dart';
+import '../../shared/widgets/app_header.dart';
 import '../../state/quran_player_controller.dart';
 import '../../state/theme_controller.dart';
 
@@ -152,27 +153,58 @@ class _ReaderScreenState extends State<ReaderScreen> {
             }
             final surah = snapshot.data!;
             _surah = surah;
-            return Column(
-              children: [
-                _Header(surah: surah),
-                _Controls(
-                  fontSize: _fontSize,
-                  showTranslation: _showTranslation,
-                  isPlayingSurah: isPlayingSurah,
-                  onFont: (v) => setState(() => _fontSize = v),
-                  onTranslation: (v) => setState(() => _showTranslation = v),
-                  onSurahAudio: _toggleSurahAudio,
-                  translationLabel: l10n.translation,
-                  fontLabel: l10n.fontSize,
-                  listenLabel: l10n.listenQuran,
-                  stopLabel: l10n.stopListening,
-                ),
-                Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: _refresh,
-                    child: ListView.separated(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+            return RefreshIndicator(
+              onRefresh: _refresh,
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  AppHeader.detail(
+                    title: surah.nameLatin,
+                    actions: [
+                      Padding(
+                        padding: const EdgeInsets.only(right: 16),
+                        child: Text(
+                          surah.nameArabic,
+                          style: AppTheme.arabicQuran(
+                            size: 20,
+                            color: BrandColors.accent,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+                      child: Text(
+                        surah.meaning,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: BrandColors.textMuted,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: _Controls(
+                      fontSize: _fontSize,
+                      showTranslation: _showTranslation,
+                      isPlayingSurah: isPlayingSurah,
+                      onFont: (v) => setState(() => _fontSize = v),
+                      onTranslation: (v) =>
+                          setState(() => _showTranslation = v),
+                      onSurahAudio: _toggleSurahAudio,
+                      translationLabel: l10n.translation,
+                      fontLabel: l10n.fontSize,
+                      listenLabel: l10n.listenQuran,
+                      stopLabel: l10n.stopListening,
+                    ),
+                  ),
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+                    sliver: SliverList.separated(
                       itemCount: surah.ayat.length,
                       separatorBuilder: (_, _) =>
                           Divider(color: BrandColors.border, height: 28),
@@ -185,56 +217,11 @@ class _ReaderScreenState extends State<ReaderScreen> {
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             );
           },
         ),
-      ),
-    );
-  }
-}
-
-class _Header extends StatelessWidget {
-  const _Header({required this.surah});
-  final Surah surah;
-
-  @override
-  Widget build(BuildContext context) {
-    context.watch<ThemeController>();
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 4, 20, 0),
-      child: Row(
-        children: [
-          BackButton(color: BrandColors.textPrimary),
-          const SizedBox(width: 4),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  surah.nameLatin,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                Text(
-                  surah.meaning,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: BrandColors.textMuted, fontSize: 12),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            surah.nameArabic,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AppTheme.arabicQuran(size: 28, color: BrandColors.accent),
-          ),
-        ],
       ),
     );
   }

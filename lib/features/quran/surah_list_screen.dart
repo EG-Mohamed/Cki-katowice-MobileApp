@@ -10,6 +10,7 @@ import '../../data/models/mp3quran.dart';
 import '../../data/services/mp3quran_service.dart';
 import '../../data/services/quran_service.dart';
 import '../../shared/widgets/app_background.dart';
+import '../../shared/widgets/app_header.dart';
 import '../../state/quran_player_controller.dart';
 import '../../state/theme_controller.dart';
 
@@ -128,11 +129,7 @@ class _SurahListScreenState extends State<SurahListScreen> {
               child: CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
-                  SliverAppBar(
-                    pinned: true,
-                    backgroundColor: Colors.transparent,
-                    title: Text(l10n.quranReader),
-                  ),
+                  AppHeader.root(title: l10n.quranReader),
                   SliverToBoxAdapter(
                     child: _ReciterBar(reciter: reciter, onTap: _openReciters),
                   ),

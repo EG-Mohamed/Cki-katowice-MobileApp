@@ -8,21 +8,25 @@ import '../../../data/services/mp3quran_service.dart';
 import '../../../state/quran_player_controller.dart';
 import '../../../state/theme_controller.dart';
 
-const List<QuranRadio> customRadios = [
-  QuranRadio(
-    id: -1,
-    name: 'إذاعة القرآن - القاهرة',
-    url: 'https://quran.yousefheiba.com/api/radio',
-  ),
-];
+List<QuranRadio> _customRadios(BuildContext context) {
+  final l10n = AppLocalizations.of(context);
+  return [
+    QuranRadio(
+      id: -1,
+      name: l10n.radioCairoQuran,
+      url: 'https://quran.yousefheiba.com/api/radio',
+    ),
+  ];
+}
 
 Future<List<QuranRadio>> loadRadios(BuildContext context) {
   final locale = Localizations.localeOf(context).languageCode;
+  final custom = _customRadios(context);
   return context
       .read<Mp3QuranService>()
       .radios(language: locale)
-      .then<List<QuranRadio>>((radios) => [...customRadios, ...radios])
-      .catchError((_) => customRadios);
+      .then<List<QuranRadio>>((radios) => [...custom, ...radios])
+      .catchError((_) => custom);
 }
 
 class RadioList extends StatefulWidget {
@@ -32,12 +36,14 @@ class RadioList extends StatefulWidget {
     this.scrollController,
     this.padding = const EdgeInsets.fromLTRB(20, 4, 20, 24),
     this.onPlay,
+    this.onRefresh,
   });
 
   final Future<List<QuranRadio>> future;
   final ScrollController? scrollController;
   final EdgeInsets padding;
   final VoidCallback? onPlay;
+  final Future<void> Function()? onRefresh;
 
   @override
   State<RadioList> createState() => _RadioListState();
@@ -134,9 +140,10 @@ class _RadioListState extends State<RadioList> {
                   ),
                 );
               }
-              return ListView.separated(
+              final list = ListView.separated(
                 controller: widget.scrollController,
                 padding: widget.padding,
+                physics: const AlwaysScrollableScrollPhysics(),
                 itemCount: radios.length,
                 separatorBuilder: (_, _) =>
                     Divider(color: BrandColors.border, height: 12),
@@ -170,6 +177,9 @@ class _RadioListState extends State<RadioList> {
                   );
                 },
               );
+              return widget.onRefresh == null
+                  ? list
+                  : RefreshIndicator(onRefresh: widget.onRefresh!, child: list);
             },
           ),
         ),

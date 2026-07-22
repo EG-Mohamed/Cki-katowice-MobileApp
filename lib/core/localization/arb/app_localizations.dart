@@ -688,6 +688,12 @@ abstract class AppLocalizations {
   /// **'Live Quran radio stations'**
   String get radioLive;
 
+  /// No description provided for @radioCairoQuran.
+  ///
+  /// In en, this message translates to:
+  /// **'Holy Quran Radio - Cairo'**
+  String get radioCairoQuran;
+
   /// No description provided for @searchRadios.
   ///
   /// In en, this message translates to:
