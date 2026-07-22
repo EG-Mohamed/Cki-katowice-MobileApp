@@ -53,6 +53,7 @@
   "notifications": "Powiadomienia",
   "prayerNotifications": "Przypomnienia o modlitwie",
   "prayerNotificationsDesc": "Automatycznie wysyłane, gdy odliczanie do modlitwy osiągnie zero.",
+  "prayerNotificationsPerPrayer": "Powiadamiaj o",
   "enableAll": "Wszystkie modlitwy",
   "about": "O aplikacji",
   "aboutBody": "Aplikacja dla społeczności CKI Katowice — czasy modlitw, kibla, Święty Koran, aktualności i piątkowa chutba.",

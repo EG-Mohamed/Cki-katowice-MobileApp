@@ -53,6 +53,7 @@
   "notifications": "الإشعارات",
   "prayerNotifications": "تنبيهات الصلاة",
   "prayerNotificationsDesc": "تصل تلقائيًا عندما يصل العد التنازلي لكل صلاة إلى الصفر.",
+  "prayerNotificationsPerPrayer": "تنبيهي لـ",
   "enableAll": "كل الصلوات",
   "about": "حول التطبيق",
   "aboutBody": "تطبيق لمجتمع مركز كاتوفيتشه — مواقيت الصلاة، القبلة، القرآن الكريم، الأخبار وخطبة الجمعة.",

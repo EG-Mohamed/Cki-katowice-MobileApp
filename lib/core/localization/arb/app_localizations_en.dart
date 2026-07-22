@@ -180,6 +180,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Automatically delivered when each prayer countdown reaches zero.';
 
   @override
+  String get prayerNotificationsPerPrayer => 'Notify me for';
+
+  @override
   String get enableAll => 'All prayers';
 
   @override

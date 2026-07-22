@@ -57,6 +57,7 @@
   "notifications": "Notifications",
   "prayerNotifications": "Prayer reminders",
   "prayerNotificationsDesc": "Automatically delivered when each prayer countdown reaches zero.",
+  "prayerNotificationsPerPrayer": "Notify me for",
   "enableAll": "All prayers",
   "about": "About",
   "aboutBody": "An app for the CKI Katowice community — prayer times, Qibla, the Holy Quran, news and the Friday Khutba.",

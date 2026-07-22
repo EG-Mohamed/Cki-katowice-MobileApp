@@ -11,6 +11,7 @@ class NotificationController extends ChangeNotifier {
     PrayerName.asr,
     PrayerName.maghrib,
     PrayerName.isha,
+    PrayerName.jumuah,
   ];
 
   Set<PrayerName> _enabled = {...notifiable};
@@ -21,10 +22,13 @@ class NotificationController extends ChangeNotifier {
 
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
-    // Prayer reminders are an automatic core feature. Migrate installations
-    // that previously stored an empty or partial manual selection.
-    _enabled = {...notifiable};
-    await prefs.setStringList(_key, _enabled.map((p) => p.name).toList());
+    final stored = prefs.getStringList(_key);
+    if (stored == null) {
+      _enabled = {...notifiable};
+    } else {
+      final storedNames = stored.toSet();
+      _enabled = notifiable.where((p) => storedNames.contains(p.name)).toSet();
+    }
     notifyListeners();
   }
 

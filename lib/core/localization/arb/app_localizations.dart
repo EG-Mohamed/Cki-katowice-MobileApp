@@ -418,6 +418,12 @@ abstract class AppLocalizations {
   /// **'Automatically delivered when each prayer countdown reaches zero.'**
   String get prayerNotificationsDesc;
 
+  /// No description provided for @prayerNotificationsPerPrayer.
+  ///
+  /// In en, this message translates to:
+  /// **'Notify me for'**
+  String get prayerNotificationsPerPrayer;
+
   /// No description provided for @enableAll.
   ///
   /// In en, this message translates to:

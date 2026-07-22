@@ -7,7 +7,9 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/localization/arb/app_localizations.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/brand_colors.dart';
+import '../../core/utils/prayer_labels.dart';
 import '../../state/locale_controller.dart';
+import '../../state/notification_controller.dart';
 import '../../state/prayer_controller.dart';
 import '../../state/prayer_notification_coordinator.dart';
 import '../../state/settings_controller.dart';
@@ -118,6 +120,8 @@ class SettingsScreen extends StatelessWidget {
                               ? notif.requestExactAlarmAccess
                               : null),
                   ),
+                  Divider(color: BrandColors.border, height: 24),
+                  _PrayerMuteList(notif: notif, l10n: l10n),
                 ],
               ),
             ),
@@ -211,6 +215,50 @@ class _NotificationStatus extends StatelessWidget {
             child: TextButton(
               onPressed: onFix,
               child: Text(l10n.openSystemSettings),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _PrayerMuteList extends StatelessWidget {
+  const _PrayerMuteList({required this.notif, required this.l10n});
+
+  final PrayerNotificationCoordinator notif;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    context.watch<ThemeController>();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.prayerNotificationsPerPrayer,
+          style: TextStyle(
+            color: BrandColors.textPrimary,
+            fontWeight: FontWeight.w700,
+            fontSize: 13,
+          ),
+        ),
+        const SizedBox(height: 8),
+        for (final name in NotificationController.notifiable)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 2),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    prayerLabel(l10n, name),
+                    style: TextStyle(color: BrandColors.textPrimary),
+                  ),
+                ),
+                Switch(
+                  value: notif.isEnabled(name),
+                  onChanged: (_) => notif.togglePrayer(name),
+                ),
+              ],
             ),
           ),
       ],
@@ -371,7 +419,12 @@ class _QuickAccess extends StatelessWidget {
         '/khutba',
         true,
       ),
-      _QuickEntry(Icons.article_outlined, l10n.newsAnnouncements, '/news', false),
+      _QuickEntry(
+        Icons.article_outlined,
+        l10n.newsAnnouncements,
+        '/news',
+        false,
+      ),
       _QuickEntry(Icons.menu_book_outlined, l10n.quranReader, '/quran', false),
     ];
     return Column(
@@ -402,9 +455,8 @@ class _QuickRow extends StatelessWidget {
     context.watch<ThemeController>();
     return InkWell(
       borderRadius: BorderRadius.circular(12),
-      onTap: () => entry.push
-          ? context.push(entry.route)
-          : context.go(entry.route),
+      onTap: () =>
+          entry.push ? context.push(entry.route) : context.go(entry.route),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Row(
@@ -429,11 +481,7 @@ class _QuickRow extends StatelessWidget {
                 ),
               ),
             ),
-            Icon(
-              Icons.chevron_right,
-              color: BrandColors.textMuted,
-              size: 20,
-            ),
+            Icon(Icons.chevron_right, color: BrandColors.textMuted, size: 20),
           ],
         ),
       ),

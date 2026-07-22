@@ -180,6 +180,9 @@ class AppLocalizationsPl extends AppLocalizations {
       'Automatycznie wysyłane, gdy odliczanie do modlitwy osiągnie zero.';
 
   @override
+  String get prayerNotificationsPerPrayer => 'Powiadamiaj o';
+
+  @override
   String get enableAll => 'Wszystkie modlitwy';
 
   @override

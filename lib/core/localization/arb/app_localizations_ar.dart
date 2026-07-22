@@ -179,6 +179,9 @@ class AppLocalizationsAr extends AppLocalizations {
       'تصل تلقائيًا عندما يصل العد التنازلي لكل صلاة إلى الصفر.';
 
   @override
+  String get prayerNotificationsPerPrayer => 'تنبيهي لـ';
+
+  @override
   String get enableAll => 'كل الصلوات';
 
   @override
