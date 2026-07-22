@@ -6,17 +6,14 @@ import '../../core/localization/arb/app_localizations.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/brand_colors.dart';
 import '../../core/utils/hijri_date.dart';
-import '../../core/utils/prayer_labels.dart';
-import '../../data/services/notification_service.dart';
 import '../../shared/widgets/app_background.dart';
 import '../../shared/widgets/section_header.dart';
 import '../../state/locale_controller.dart';
-import '../../state/notification_controller.dart';
 import '../../state/prayer_controller.dart';
+import '../../state/prayer_notification_coordinator.dart';
 import '../../state/settings_controller.dart';
 import 'widgets/next_prayer_hero.dart';
 import 'widgets/prayer_row.dart';
-import 'widgets/quick_actions.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -32,17 +29,8 @@ class HomeScreen extends StatelessWidget {
     final prayer = context.read<PrayerController>();
     await prayer.load(date: prayer.selectedDate);
     if (!context.mounted || !prayer.isSelectedDateToday) return;
-    final notif = context.read<NotificationController>();
-    final service = context.read<NotificationService>();
-    final l10n = AppLocalizations.of(context);
-    final day = prayer.day;
-    if (day == null || notif.enabled.isEmpty) return;
-    await service.requestPermission();
-    await service.scheduleForDay(
-      day: day,
-      enabled: notif.enabled,
-      title: l10n.notificationTitle,
-      titleFor: (name) => l10n.notificationBody(prayerLabel(l10n, name)),
+    await context.read<PrayerNotificationCoordinator>().synchronize(
+      force: true,
     );
   }
 
@@ -133,13 +121,6 @@ class HomeScreen extends StatelessWidget {
                         },
                       ),
                     ),
-                    SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(16, 22, 16, 10),
-                      sliver: SliverToBoxAdapter(
-                        child: SectionHeader(title: l10n.quickActions),
-                      ),
-                    ),
-                    const SliverToBoxAdapter(child: QuickActions()),
                     SliverToBoxAdapter(
                       child: SizedBox(
                         height: MediaQuery.paddingOf(context).bottom + 110,
@@ -234,6 +215,8 @@ class _Logo extends StatelessWidget {
         logo,
         width: 46,
         height: 46,
+        cacheWidth: 144,
+        cacheHeight: 144,
         fit: BoxFit.cover,
         errorBuilder: (_, _, _) => fallback,
       ),

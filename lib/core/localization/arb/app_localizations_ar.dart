@@ -21,6 +21,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get navQibla => 'القبلة';
 
   @override
+  String get navRadio => 'الإذاعة';
+
+  @override
   String get navQuran => 'القرآن';
 
   @override
@@ -166,7 +169,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get prayerNotifications => 'تنبيهات الصلاة';
 
   @override
-  String get prayerNotificationsDesc => 'احصل على تنبيه عند كل وقت صلاة.';
+  String get prayerNotificationsDesc =>
+      'تصل تلقائيًا عندما يصل العد التنازلي لكل صلاة إلى الصفر.';
 
   @override
   String get enableAll => 'كل الصلوات';
@@ -319,4 +323,27 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get exactAlarmHint =>
       'لتذكيرات دقيقة في وقتها، اسمح لهذا التطبيق بـ \'التنبيهات والتذكيرات\' في إعدادات النظام.';
+
+  @override
+  String get notificationSyncing => 'جارٍ تحديث تذكيرات الصلاة…';
+
+  @override
+  String notificationScheduled(Object count, Object date) {
+    return 'تمت جدولة $count تذكيرًا حتى $date.';
+  }
+
+  @override
+  String get notificationScheduleFailed =>
+      'تعذر تحديث تذكيرات الصلاة. تم الاحتفاظ بالتذكيرات الحالية.';
+
+  @override
+  String get notificationDelayedHint =>
+      'التذكيرات مفعلة، لكن قد يؤخرها أندرويد حتى يتم منح إذن المنبهات الدقيقة.';
+
+  @override
+  String get testNotificationScheduled =>
+      'تمت جدولة الاختبار. اقفل الشاشة الآن؛ سيصل خلال نحو 15 ثانية.';
+
+  @override
+  String get openSystemSettings => 'فتح إعدادات النظام';
 }

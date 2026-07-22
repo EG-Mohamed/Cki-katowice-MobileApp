@@ -21,6 +21,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get navQibla => 'Kibla';
 
   @override
+  String get navRadio => 'Radio';
+
+  @override
   String get navQuran => 'Koran';
 
   @override
@@ -168,7 +171,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get prayerNotificationsDesc =>
-      'Otrzymuj powiadomienie o każdej porze modlitwy.';
+      'Automatycznie wysyłane, gdy odliczanie do modlitwy osiągnie zero.';
 
   @override
   String get enableAll => 'Wszystkie modlitwy';
@@ -323,4 +326,27 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get exactAlarmHint =>
       'Aby przypomnienia były punktualne, zezwól tej aplikacji na \'Alarmy i przypomnienia\' w ustawieniach systemu.';
+
+  @override
+  String get notificationSyncing => 'Aktualizowanie przypomnień o modlitwie…';
+
+  @override
+  String notificationScheduled(Object count, Object date) {
+    return 'Zaplanowano $count przypomnień do $date.';
+  }
+
+  @override
+  String get notificationScheduleFailed =>
+      'Nie udało się zaktualizować przypomnień. Istniejące przypomnienia zachowano.';
+
+  @override
+  String get notificationDelayedHint =>
+      'Przypomnienia są włączone, ale Android może je opóźnić do czasu przyznania dostępu do dokładnych alarmów.';
+
+  @override
+  String get testNotificationScheduled =>
+      'Test zaplanowany. Zablokuj teraz ekran; powiadomienie pojawi się za około 15 sekund.';
+
+  @override
+  String get openSystemSettings => 'Otwórz ustawienia systemowe';
 }

@@ -4,6 +4,7 @@
   "mosqueName": "Islamic Cultural Centre Katowice",
   "navHome": "Home",
   "navQibla": "Qibla",
+  "navRadio": "Radio",
   "navQuran": "Quran",
   "navNews": "News",
   "navMore": "More",
@@ -53,7 +54,7 @@
   "language": "Language",
   "notifications": "Notifications",
   "prayerNotifications": "Prayer reminders",
-  "prayerNotificationsDesc": "Get notified at each prayer time.",
+  "prayerNotificationsDesc": "Automatically delivered when each prayer countdown reaches zero.",
   "enableAll": "All prayers",
   "about": "About",
   "aboutBody": "An app for the CKI Katowice community — prayer times, Qibla, the Holy Quran, news and the Friday Khutba.",
@@ -103,5 +104,12 @@
   "testNotification": "Send a test notification",
   "testNotificationBody": "This is how prayer reminders will appear.",
   "notificationPermissionDenied": "Notification permission is required. Please enable it in system settings.",
-  "exactAlarmHint": "For exact on-time reminders, allow 'Alarms & reminders' for this app in system settings."
+  "exactAlarmHint": "For exact on-time reminders, allow 'Alarms & reminders' for this app in system settings.",
+  "notificationSyncing": "Updating prayer reminders…",
+  "notificationScheduled": "{count} reminders scheduled through {date}.",
+  "@notificationScheduled": { "placeholders": { "count": {}, "date": {} } },
+  "notificationScheduleFailed": "Prayer reminders could not be updated. Existing reminders were kept.",
+  "notificationDelayedHint": "Reminders are enabled, but Android may delay them until exact alarm access is granted.",
+  "testNotificationScheduled": "Test scheduled. Lock the screen now; it will arrive in about 15 seconds.",
+  "openSystemSettings": "Open system settings"
 }

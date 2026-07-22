@@ -21,13 +21,11 @@ class NotificationController extends ChangeNotifier {
 
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
-    final stored = prefs.getStringList(_key);
-    if (stored != null) {
-      _enabled = stored
-          .map((s) => PrayerName.values.firstWhere((p) => p.name == s))
-          .toSet();
-      notifyListeners();
-    }
+    // Prayer reminders are an automatic core feature. Migrate installations
+    // that previously stored an empty or partial manual selection.
+    _enabled = {...notifiable};
+    await prefs.setStringList(_key, _enabled.map((p) => p.name).toList());
+    notifyListeners();
   }
 
   Future<void> toggle(PrayerName name) async {
@@ -35,6 +33,16 @@ class NotificationController extends ChangeNotifier {
       _enabled.remove(name);
     } else {
       _enabled.add(name);
+    }
+    await _persist();
+    notifyListeners();
+  }
+
+  Future<void> setEnabled(PrayerName name, bool value) async {
+    if (value) {
+      _enabled.add(name);
+    } else {
+      _enabled.remove(name);
     }
     await _persist();
     notifyListeners();

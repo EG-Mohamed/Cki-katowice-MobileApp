@@ -9,9 +9,27 @@ import '../../data/models/content.dart';
 import '../../data/services/news_service.dart';
 import '../../shared/widgets/app_background.dart';
 
-class NewsDetailScreen extends StatelessWidget {
+class NewsDetailScreen extends StatefulWidget {
   const NewsDetailScreen({super.key, required this.slug});
   final String slug;
+
+  @override
+  State<NewsDetailScreen> createState() => _NewsDetailScreenState();
+}
+
+class _NewsDetailScreenState extends State<NewsDetailScreen> {
+  Future<NewsItem>? _future;
+  String? _localeCode;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final locale = Localizations.localeOf(context).languageCode;
+    if (_localeCode != locale) {
+      _localeCode = locale;
+      _future = context.read<NewsService>().find(widget.slug);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +38,7 @@ class NewsDetailScreen extends StatelessWidget {
     return AppBackground(
       child: SafeArea(
         child: FutureBuilder<NewsItem>(
-          future: context.read<NewsService>().find(slug),
+          future: _future,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
@@ -55,6 +73,8 @@ class NewsDetailScreen extends StatelessWidget {
                               item.featuredImageUrl!,
                               height: 210,
                               width: double.infinity,
+                              cacheWidth: 1024,
+                              cacheHeight: 630,
                               fit: BoxFit.cover,
                               headers: const {
                                 'Accept': 'image/*',

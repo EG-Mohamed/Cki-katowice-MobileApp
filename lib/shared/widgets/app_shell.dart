@@ -43,9 +43,9 @@ class _AppShellState extends State<AppShell> {
         ),
         left: [
           _NavItem(
-            icon: Icons.explore_outlined,
-            activeIcon: Icons.explore,
-            label: l10n.navQibla,
+            icon: Icons.radio_outlined,
+            activeIcon: Icons.radio,
+            label: l10n.navRadio,
             selected: current == 1,
             onTap: () => _goBranch(1),
           ),
@@ -148,7 +148,6 @@ class _HomeButton extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final controller = context.watch<PrayerController>();
     final next = controller.nextPrayer;
-    final countdown = next == null ? null : _format(controller.remaining);
 
     return GestureDetector(
       onTap: onTap,
@@ -200,12 +199,15 @@ class _HomeButton extends StatelessWidget {
               color: BrandColors.primary,
             ),
           ),
-          if (countdown != null)
-            Text(
-              countdown,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 9, color: BrandColors.textMuted),
+          if (next != null)
+            ValueListenableBuilder<Duration>(
+              valueListenable: controller.remainingListenable,
+              builder: (context, remaining, _) => Text(
+                _format(remaining),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 9, color: BrandColors.textMuted),
+              ),
             ),
         ],
       ),

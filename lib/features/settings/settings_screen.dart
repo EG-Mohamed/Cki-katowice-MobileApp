@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/localization/arb/app_localizations.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/brand_colors.dart';
-import '../../core/utils/prayer_labels.dart';
-import '../../data/services/notification_service.dart';
 import '../../state/locale_controller.dart';
-import '../../state/notification_controller.dart';
 import '../../state/prayer_controller.dart';
+import '../../state/prayer_notification_coordinator.dart';
 import '../../state/settings_controller.dart';
 import '../../state/theme_controller.dart';
 import '../../shared/widgets/app_background.dart';
@@ -19,55 +19,11 @@ import 'widgets/about_section.dart';
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
-  Future<void> _reschedule(BuildContext context) async {
-    final prayer = context.read<PrayerController>();
-    final notif = context.read<NotificationController>();
-    final service = context.read<NotificationService>();
-    final l10n = AppLocalizations.of(context);
-    final day = prayer.day;
-    if (day == null) return;
-    if (notif.enabled.isEmpty) {
-      await service.cancelAll();
-      return;
-    }
-    await service.requestPermission();
-    await service.scheduleForDay(
-      day: day,
-      enabled: notif.enabled,
-      title: l10n.notificationTitle,
-      titleFor: (name) => l10n.notificationBody(prayerLabel(l10n, name)),
-    );
-  }
-
-  Future<void> _testNotification(BuildContext context) async {
-    final service = context.read<NotificationService>();
-    final l10n = AppLocalizations.of(context);
-    final messenger = ScaffoldMessenger.of(context);
-    final granted = await service.requestPermission();
-    if (!granted) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(l10n.notificationPermissionDenied)),
-      );
-      return;
-    }
-    await service.showTestNotification(
-      title: l10n.notificationTitle,
-      body: l10n.testNotificationBody,
-    );
-    if (!context.mounted) return;
-    final exact = await service.canScheduleExactAlarms();
-    if (!exact) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(l10n.exactAlarmHint)),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final locale = context.watch<LocaleController>();
-    final notif = context.watch<NotificationController>();
+    final notif = context.watch<PrayerNotificationCoordinator>();
     final theme = context.watch<ThemeController>();
     final site = context.watch<SettingsController>().settings;
 
@@ -86,10 +42,6 @@ class SettingsScreen extends StatelessWidget {
                 await locale.setLocale(value);
                 if (context.mounted) {
                   await context.read<PrayerController>().load();
-                }
-                if (context.mounted &&
-                    context.read<PrayerController>().isSelectedDateToday) {
-                  await _reschedule(context);
                 }
               },
               l10n: l10n,
@@ -110,38 +62,69 @@ class SettingsScreen extends StatelessWidget {
             const SizedBox(height: 12),
             _Card(
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _ToggleRow(
-                    title: l10n.prayerNotifications,
-                    subtitle: l10n.prayerNotificationsDesc,
-                    value: notif.allEnabled,
-                    onChanged: (v) async {
-                      await notif.setAll(v);
-                      if (context.mounted) await _reschedule(context);
-                    },
+                  Row(
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: BrandColors.accentSoft,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          Icons.notifications_active_outlined,
+                          color: BrandColors.accent,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              l10n.prayerNotifications,
+                              style: TextStyle(
+                                color: BrandColors.textPrimary,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              l10n.prayerNotificationsDesc,
+                              style: TextStyle(
+                                color: BrandColors.textMuted,
+                                fontSize: 12,
+                                height: 1.35,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                   Divider(color: BrandColors.border, height: 24),
-                  for (final name in NotificationController.notifiable)
-                    _ToggleRow(
-                      title: prayerLabel(l10n, name),
-                      value: notif.isEnabled(name),
-                      onChanged: (_) async {
-                        await notif.toggle(name);
-                        if (context.mounted) await _reschedule(context);
-                      },
-                    ),
-                  Divider(color: BrandColors.border, height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () => _testNotification(context),
-                      icon: const Icon(Icons.notifications_active_outlined),
-                      label: Text(l10n.testNotification),
-                    ),
+                  _NotificationStatus(
+                    status: notif.status,
+                    onFix:
+                        notif.status.permission ==
+                            PrayerNotificationPermission.denied
+                        ? () async {
+                            await openAppSettings();
+                          }
+                        : (!notif.status.exactAlarmAvailable
+                              ? notif.requestExactAlarmAccess
+                              : null),
                   ),
                 ],
               ),
             ),
+            const SizedBox(height: 28),
+            SectionHeader(title: l10n.quickActions),
+            const SizedBox(height: 12),
+            const _Card(child: _QuickAccess()),
             const SizedBox(height: 28),
             SectionHeader(title: l10n.about),
             const SizedBox(height: 12),
@@ -155,6 +138,81 @@ class SettingsScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _NotificationStatus extends StatelessWidget {
+  const _NotificationStatus({required this.status, this.onFix});
+
+  final PrayerNotificationStatus status;
+  final Future<void> Function()? onFix;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final (icon, color, message) = switch (status.syncState) {
+      PrayerNotificationSyncState.syncing => (
+        Icons.sync,
+        BrandColors.textMuted,
+        l10n.notificationSyncing,
+      ),
+      PrayerNotificationSyncState.failed => (
+        Icons.error_outline,
+        Theme.of(context).colorScheme.error,
+        l10n.notificationScheduleFailed,
+      ),
+      _ when status.permission == PrayerNotificationPermission.denied => (
+        Icons.notifications_off_outlined,
+        Theme.of(context).colorScheme.error,
+        l10n.notificationPermissionDenied,
+      ),
+      _ when !status.exactAlarmAvailable => (
+        Icons.schedule,
+        BrandColors.accent,
+        l10n.notificationDelayedHint,
+      ),
+      _ when status.scheduledThrough != null => (
+        Icons.check_circle_outline,
+        BrandColors.accent,
+        l10n.notificationScheduled(
+          status.scheduledCount,
+          MaterialLocalizations.of(
+            context,
+          ).formatCompactDate(status.scheduledThrough!),
+        ),
+      ),
+      _ => (
+        Icons.info_outline,
+        BrandColors.textMuted,
+        l10n.prayerNotificationsDesc,
+      ),
+    };
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: color, size: 18),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                message,
+                style: TextStyle(color: color, fontSize: 12, height: 1.35),
+              ),
+            ),
+          ],
+        ),
+        if (onFix != null)
+          Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: TextButton(
+              onPressed: onFix,
+              child: Text(l10n.openSystemSettings),
+            ),
+          ),
+      ],
     );
   }
 }
@@ -290,6 +348,89 @@ class _ToggleRow extends StatelessWidget {
         ),
         Switch(value: value, onChanged: onChanged),
       ],
+    );
+  }
+}
+
+class _QuickAccess extends StatelessWidget {
+  const _QuickAccess();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final entries = [
+      _QuickEntry(Icons.explore_outlined, l10n.qiblaDirection, '/qibla', true),
+      _QuickEntry(
+        Icons.record_voice_over_outlined,
+        l10n.khutbaTitle,
+        '/khutba',
+        true,
+      ),
+      _QuickEntry(Icons.article_outlined, l10n.newsAnnouncements, '/news', false),
+      _QuickEntry(Icons.menu_book_outlined, l10n.quranReader, '/quran', false),
+    ];
+    return Column(
+      children: [
+        for (int i = 0; i < entries.length; i++) ...[
+          if (i > 0) Divider(color: BrandColors.border, height: 20),
+          _QuickRow(entry: entries[i]),
+        ],
+      ],
+    );
+  }
+}
+
+class _QuickEntry {
+  const _QuickEntry(this.icon, this.label, this.route, this.push);
+  final IconData icon;
+  final String label;
+  final String route;
+  final bool push;
+}
+
+class _QuickRow extends StatelessWidget {
+  const _QuickRow({required this.entry});
+  final _QuickEntry entry;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () => entry.push
+          ? context.push(entry.route)
+          : context.go(entry.route),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: BrandColors.primary.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(entry.icon, color: BrandColors.primary, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                entry.label,
+                style: TextStyle(
+                  color: BrandColors.textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            Icon(
+              Icons.chevron_right,
+              color: BrandColors.textMuted,
+              size: 20,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

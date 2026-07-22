@@ -73,9 +73,9 @@ class _CkiAppState extends State<CkiApp> {
       theme: AppTheme.build(locale, isDark: isDark),
       routerConfig: _router,
       builder: (context, child) {
-        return Material(
-          color: BrandColors.scaffold,
-          child: Column(
+        return Scaffold(
+          // color: BrandColors.scaffold,
+          body: Column(
             children: [
               SafeArea(bottom: false, child: const AnnouncementBanner()),
               Expanded(

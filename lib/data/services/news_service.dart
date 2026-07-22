@@ -8,9 +8,11 @@ abstract class NewsService {
 }
 
 class ApiNewsService implements NewsService {
-  const ApiNewsService(this._api);
+  ApiNewsService(this._api);
 
   final ApiClient _api;
+  final Map<String, ({DateTime storedAt, Future<NewsItem> value})>
+  _detailCache = {};
 
   @override
   Future<PaginatedNews> page({
@@ -31,7 +33,19 @@ class ApiNewsService implements NewsService {
   }
 
   @override
-  Future<NewsItem> find(String slug) async {
+  Future<NewsItem> find(String slug) {
+    final cached = _detailCache[slug];
+    if (cached != null &&
+        DateTime.now().difference(cached.storedAt) <
+            const Duration(minutes: 5)) {
+      return cached.value;
+    }
+    final future = _find(slug);
+    _detailCache[slug] = (storedAt: DateTime.now(), value: future);
+    return future;
+  }
+
+  Future<NewsItem> _find(String slug) async {
     final data = await _api.get('/news/${Uri.encodeComponent(slug)}');
     return NewsItem.fromJson(data as Map<String, dynamic>);
   }

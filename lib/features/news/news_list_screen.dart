@@ -362,6 +362,8 @@ class _NewsCard extends StatelessWidget {
                       if (item.featuredImageUrl != null)
                         Image.network(
                           item.featuredImageUrl!,
+                          cacheWidth: 720,
+                          cacheHeight: 440,
                           fit: BoxFit.cover,
                           headers: const {
                             'Accept': 'image/*',

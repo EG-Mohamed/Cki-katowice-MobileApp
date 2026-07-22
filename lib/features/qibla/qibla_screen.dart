@@ -44,11 +44,21 @@ class _QiblaScreenState extends State<QiblaScreen> {
     final l10n = AppLocalizations.of(context);
     return AppBackground(
       child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: _loading
-              ? const Center(child: CircularProgressIndicator())
-              : (_granted ? _content(l10n) : _permission(l10n)),
+        child: Column(
+          children: [
+            const Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: BackButton(),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                child: _loading
+                    ? const Center(child: CircularProgressIndicator())
+                    : (_granted ? _content(l10n) : _permission(l10n)),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -72,9 +82,11 @@ class _QiblaScreenState extends State<QiblaScreen> {
           stream: _service.readings(),
           builder: (context, snapshot) {
             final reading = snapshot.data;
-            return CompassDial(
-              reading: reading,
-              alignedLabel: l10n.qiblaAligned,
+            return RepaintBoundary(
+              child: CompassDial(
+                reading: reading,
+                alignedLabel: l10n.qiblaAligned,
+              ),
             );
           },
         ),

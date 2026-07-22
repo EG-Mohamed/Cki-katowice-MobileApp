@@ -52,15 +52,26 @@ class QiblaService {
         1000;
   }
 
-  Stream<QiblaReading> readings() {
+  Stream<QiblaReading> readings() async* {
     final events = FlutterCompass.events;
-    if (events == null) return const Stream.empty();
-    return events
-        .where((e) => e.heading != null && _qiblaBearing != null)
-        .map(
-          (e) =>
-              QiblaReading(heading: e.heading!, qiblaBearing: _qiblaBearing!),
-        );
+    if (events == null) return;
+    var lastEmission = DateTime.fromMillisecondsSinceEpoch(0);
+    double? lastHeading;
+    await for (final event in events) {
+      final heading = event.heading;
+      final bearing = _qiblaBearing;
+      if (heading == null || bearing == null) continue;
+      final now = DateTime.now();
+      if (now.difference(lastEmission) < const Duration(milliseconds: 66)) {
+        continue;
+      }
+      if (lastHeading != null && (heading - lastHeading).abs() < 0.25) {
+        continue;
+      }
+      lastEmission = now;
+      lastHeading = heading;
+      yield QiblaReading(heading: heading, qiblaBearing: bearing);
+    }
   }
 
   double _bearingToKaaba(double lat, double lng) {

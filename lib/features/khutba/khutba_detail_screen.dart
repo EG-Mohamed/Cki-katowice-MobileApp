@@ -9,9 +9,27 @@ import '../../data/models/content.dart';
 import '../../data/services/khutba_service.dart';
 import '../../shared/widgets/app_background.dart';
 
-class KhutbaDetailScreen extends StatelessWidget {
+class KhutbaDetailScreen extends StatefulWidget {
   const KhutbaDetailScreen({super.key, required this.slug});
   final String slug;
+
+  @override
+  State<KhutbaDetailScreen> createState() => _KhutbaDetailScreenState();
+}
+
+class _KhutbaDetailScreenState extends State<KhutbaDetailScreen> {
+  Future<Khutba>? _future;
+  String? _localeCode;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final locale = Localizations.localeOf(context).languageCode;
+    if (_localeCode != locale) {
+      _localeCode = locale;
+      _future = context.read<KhutbaService>().find(widget.slug);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +38,7 @@ class KhutbaDetailScreen extends StatelessWidget {
     return AppBackground(
       child: SafeArea(
         child: FutureBuilder<Khutba>(
-          future: context.read<KhutbaService>().find(slug),
+          future: _future,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());

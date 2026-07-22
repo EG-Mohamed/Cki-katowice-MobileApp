@@ -8,7 +8,12 @@ import '../../../core/theme/brand_colors.dart';
 import '../../../data/models/content.dart';
 
 class AboutSection extends StatelessWidget {
-  const AboutSection({super.key, required this.settings, required this.fallbackName, required this.fallbackBody});
+  const AboutSection({
+    super.key,
+    required this.settings,
+    required this.fallbackName,
+    required this.fallbackBody,
+  });
 
   final SiteSettings? settings;
   final String fallbackName;
@@ -33,6 +38,8 @@ class AboutSection extends StatelessWidget {
                         data.logo,
                         width: 48,
                         height: 48,
+                        cacheWidth: 144,
+                        cacheHeight: 144,
                         fit: BoxFit.cover,
                         errorBuilder: (_, _, _) => _LogoFallback(),
                       ),
@@ -100,25 +107,31 @@ class _ContactCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final rows = <Widget>[];
     if (data.primaryPhone.isNotEmpty) {
-      rows.add(_LinkRow(
-        icon: Icons.call,
-        label: data.primaryPhone,
-        onTap: () => _open(Uri(scheme: 'tel', path: data.primaryPhone)),
-      ));
+      rows.add(
+        _LinkRow(
+          icon: Icons.call,
+          label: data.primaryPhone,
+          onTap: () => _open(Uri(scheme: 'tel', path: data.primaryPhone)),
+        ),
+      );
     }
     if (data.secondaryPhone.isNotEmpty) {
-      rows.add(_LinkRow(
-        icon: Icons.call_outlined,
-        label: data.secondaryPhone,
-        onTap: () => _open(Uri(scheme: 'tel', path: data.secondaryPhone)),
-      ));
+      rows.add(
+        _LinkRow(
+          icon: Icons.call_outlined,
+          label: data.secondaryPhone,
+          onTap: () => _open(Uri(scheme: 'tel', path: data.secondaryPhone)),
+        ),
+      );
     }
     if (data.email.isNotEmpty) {
-      rows.add(_LinkRow(
-        icon: Icons.mail_outline,
-        label: data.email,
-        onTap: () => _open(Uri(scheme: 'mailto', path: data.email)),
-      ));
+      rows.add(
+        _LinkRow(
+          icon: Icons.mail_outline,
+          label: data.email,
+          onTap: () => _open(Uri(scheme: 'mailto', path: data.email)),
+        ),
+      );
     }
     if (rows.isEmpty) return const SizedBox.shrink();
     return _Card(
@@ -235,18 +248,20 @@ class _StaticMap extends StatelessWidget {
     final n = math.pow(2, _zoom).toDouble();
     final latRad = lat * math.pi / 180;
     final x = ((lng + 180) / 360 * n).floor();
-    final y = ((1 - math.log(math.tan(latRad) + 1 / math.cos(latRad)) / math.pi) /
+    final y =
+        ((1 - math.log(math.tan(latRad) + 1 / math.cos(latRad)) / math.pi) /
                 2 *
                 n)
             .floor();
-    final url =
-        'https://tile.openstreetmap.org/$_zoom/$x/$y.png';
+    final url = 'https://tile.openstreetmap.org/$_zoom/$x/$y.png';
     return Stack(
       fit: StackFit.expand,
       children: [
         Container(color: BrandColors.surfaceMuted),
         Image.network(
           url,
+          cacheWidth: 720,
+          cacheHeight: 420,
           fit: BoxFit.cover,
           errorBuilder: (_, _, _) => Center(
             child: Icon(Icons.place, color: BrandColors.primary, size: 40),
@@ -266,7 +281,11 @@ class _StaticMap extends StatelessWidget {
 }
 
 class _LinkRow extends StatelessWidget {
-  const _LinkRow({required this.icon, required this.label, required this.onTap});
+  const _LinkRow({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
 
   final IconData icon;
   final String label;

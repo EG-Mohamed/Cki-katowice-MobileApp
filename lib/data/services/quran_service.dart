@@ -68,10 +68,12 @@ class ApiQuranService implements QuranService {
   }
 
   Future<Map<String, dynamic>> _get(String path) async {
-    final response = await _client.get(
-      Uri.parse('$_baseUrl$path'),
-      headers: const {'Accept': 'application/json'},
-    );
+    final response = await _client
+        .get(
+          Uri.parse('$_baseUrl$path'),
+          headers: const {'Accept': 'application/json'},
+        )
+        .timeout(const Duration(seconds: 15));
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw QuranApiException(response.statusCode);
     }

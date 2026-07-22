@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'brand_colors.dart';
 
@@ -8,8 +7,7 @@ class AppTheme {
 
   static ThemeData build(Locale locale, {bool isDark = false}) {
     final bool isArabic = locale.languageCode == 'ar';
-    final Brightness brightness =
-        isDark ? Brightness.dark : Brightness.light;
+    final Brightness brightness = isDark ? Brightness.dark : Brightness.light;
     final ColorScheme scheme = ColorScheme(
       brightness: brightness,
       primary: BrandColors.primary,
@@ -78,9 +76,9 @@ class AppTheme {
   }
 
   static TextTheme _textTheme(bool isArabic) {
-    final TextTheme body = isArabic
-        ? GoogleFonts.notoKufiArabicTextTheme()
-        : GoogleFonts.interTextTheme();
+    final TextTheme body = Typography.material2021().black.apply(
+      fontFamily: isArabic ? 'NotoKufiArabic' : 'Inter',
+    );
     return body.apply(
       bodyColor: BrandColors.textPrimary,
       displayColor: BrandColors.textPrimary,
@@ -88,9 +86,10 @@ class AppTheme {
   }
 
   static TextStyle _display(bool isArabic) {
-    return isArabic
-        ? GoogleFonts.notoKufiArabic(fontWeight: FontWeight.w700)
-        : GoogleFonts.inter(fontWeight: FontWeight.w700);
+    return TextStyle(
+      fontFamily: isArabic ? 'NotoKufiArabic' : 'Inter',
+      fontWeight: FontWeight.w700,
+    );
   }
 
   static TextStyle display(BuildContext context, {double? size, Color? color}) {
@@ -103,7 +102,8 @@ class AppTheme {
   }
 
   static TextStyle arabicQuran({double size = 24, Color? color}) {
-    return GoogleFonts.amiri(
+    return TextStyle(
+      fontFamily: 'Amiri',
       fontSize: size,
       height: 1.9,
       color: color ?? BrandColors.textPrimary,

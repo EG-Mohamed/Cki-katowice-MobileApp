@@ -11,7 +11,6 @@ import '../../data/services/mp3quran_service.dart';
 import '../../data/services/quran_service.dart';
 import '../../shared/widgets/app_background.dart';
 import '../../state/quran_player_controller.dart';
-import 'widgets/radios_sheet.dart';
 
 class SurahListScreen extends StatefulWidget {
   const SurahListScreen({super.key});
@@ -130,13 +129,6 @@ class _SurahListScreenState extends State<SurahListScreen> {
                     title: Text(l10n.quranReader),
                   ),
                   SliverToBoxAdapter(
-                    child: _RadioBanner(
-                      isPlayingRadio: controller.isRadio,
-                      radioName: controller.radioName,
-                      onTap: () => showRadiosSheet(context),
-                    ),
-                  ),
-                  SliverToBoxAdapter(
                     child: _ReciterBar(
                       reciter: controller.reciter,
                       onTap: _openReciters,
@@ -201,90 +193,6 @@ class _SurahListScreenState extends State<SurahListScreen> {
               ),
             );
           },
-        ),
-      ),
-    );
-  }
-}
-
-class _RadioBanner extends StatelessWidget {
-  const _RadioBanner({
-    required this.isPlayingRadio,
-    required this.radioName,
-    required this.onTap,
-  });
-
-  final bool isPlayingRadio;
-  final String? radioName;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 4, 20, 4),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [BrandColors.accent, BrandColors.accentLight],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-              ),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 42,
-                  height: 42,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.25),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.radio, color: Colors.white),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.radios,
-                        style: TextStyle(
-                          color: BrandColors.onAccent,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      Text(
-                        isPlayingRadio && radioName != null
-                            ? radioName!
-                            : l10n.radioLive,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: BrandColors.onAccent.withValues(alpha: 0.75),
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  isPlayingRadio ? Icons.graphic_eq : Icons.play_circle_fill,
-                  color: BrandColors.onAccent,
-                  size: 28,
-                ),
-              ],
-            ),
-          ),
         ),
       ),
     );

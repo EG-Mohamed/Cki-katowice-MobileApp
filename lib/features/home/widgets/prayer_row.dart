@@ -6,7 +6,6 @@ import '../../../core/localization/arb/app_localizations.dart';
 import '../../../core/theme/brand_colors.dart';
 import '../../../core/utils/prayer_labels.dart';
 import '../../../data/models/prayer.dart';
-import '../../../state/notification_controller.dart';
 import '../../../state/prayer_controller.dart';
 
 class PrayerRow extends StatelessWidget {
@@ -22,12 +21,6 @@ class PrayerRow extends StatelessWidget {
     final controller = context.read<PrayerController>();
     final day = controller.day!;
     final time = DateFormat.Hm(locale).format(slot.dateTimeOn(day.date));
-    final notif = context.watch<NotificationController>();
-    final canNotify =
-        controller.isSelectedDateToday && slot.name != PrayerName.sunrise;
-
-    final notificationOn = notif.isEnabled(slot.name);
-
     return Container(
       padding: const EdgeInsets.fromLTRB(10, 8, 8, 8),
       decoration: BoxDecoration(
@@ -59,15 +52,6 @@ class PrayerRow extends StatelessWidget {
           ),
           const SizedBox(width: 10),
           _TimePill(label: time, active: isNext),
-          const SizedBox(width: 6),
-          if (canNotify)
-            _NotificationButton(
-              enabled: notificationOn,
-              tooltip: notificationOn ? l10n.adhanOn : l10n.adhanOff,
-              onPressed: () => notif.toggle(slot.name),
-            )
-          else
-            const SizedBox(width: 40, height: 40),
         ],
       ),
     );
@@ -141,37 +125,6 @@ class _TimePill extends StatelessWidget {
           fontSize: 14,
           fontWeight: FontWeight.w800,
           fontFeatures: const [FontFeature.tabularFigures()],
-        ),
-      ),
-    );
-  }
-}
-
-class _NotificationButton extends StatelessWidget {
-  const _NotificationButton({
-    required this.enabled,
-    required this.tooltip,
-    required this.onPressed,
-  });
-
-  final bool enabled;
-  final String tooltip;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 40,
-      height: 40,
-      child: IconButton(
-        tooltip: tooltip,
-        padding: EdgeInsets.zero,
-        visualDensity: VisualDensity.compact,
-        onPressed: onPressed,
-        icon: Icon(
-          enabled ? Icons.notifications_active : Icons.notifications_none,
-          size: 18,
-          color: enabled ? BrandColors.accent : BrandColors.textMuted,
         ),
       ),
     );

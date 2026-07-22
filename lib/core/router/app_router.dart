@@ -7,6 +7,7 @@ import '../../features/khutba/khutba_list_screen.dart';
 import '../../features/news/news_detail_screen.dart';
 import '../../features/news/news_list_screen.dart';
 import '../../features/qibla/qibla_screen.dart';
+import '../../features/radio/radio_screen.dart';
 import '../../features/quran/now_playing_screen.dart';
 import '../../features/quran/reader_screen.dart';
 import '../../features/quran/reciter_picker_screen.dart';
@@ -35,8 +36,8 @@ GoRouter buildRouter() {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/qibla',
-                builder: (context, state) => const QiblaScreen(),
+                path: '/radio',
+                builder: (context, state) => const RadioScreen(),
               ),
             ],
           ),
@@ -87,6 +88,11 @@ GoRouter buildRouter() {
             ],
           ),
         ],
+      ),
+      GoRoute(
+        path: '/qibla',
+        parentNavigatorKey: _rootKey,
+        builder: (context, state) => const QiblaScreen(),
       ),
       GoRoute(
         path: '/now-playing',

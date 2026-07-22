@@ -8,7 +8,6 @@ import '../../core/theme/app_theme.dart';
 import '../../core/theme/brand_colors.dart';
 import '../../shared/widgets/geometric_pattern.dart';
 import '../../state/quran_player_controller.dart';
-import 'widgets/radios_sheet.dart';
 
 class NowPlayingScreen extends StatelessWidget {
   const NowPlayingScreen({super.key});
@@ -171,7 +170,7 @@ class _ModeToggle extends StatelessWidget {
             icon: Icons.radio,
             label: l10n.radios,
             selected: isRadio,
-            onTap: () => showRadiosSheet(context),
+            onTap: () => context.go('/radio'),
           ),
         ],
       ),

@@ -21,6 +21,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navQibla => 'Qibla';
 
   @override
+  String get navRadio => 'Radio';
+
+  @override
   String get navQuran => 'Quran';
 
   @override
@@ -167,7 +170,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get prayerNotifications => 'Prayer reminders';
 
   @override
-  String get prayerNotificationsDesc => 'Get notified at each prayer time.';
+  String get prayerNotificationsDesc =>
+      'Automatically delivered when each prayer countdown reaches zero.';
 
   @override
   String get enableAll => 'All prayers';
@@ -321,4 +325,27 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get exactAlarmHint =>
       'For exact on-time reminders, allow \'Alarms & reminders\' for this app in system settings.';
+
+  @override
+  String get notificationSyncing => 'Updating prayer reminders…';
+
+  @override
+  String notificationScheduled(Object count, Object date) {
+    return '$count reminders scheduled through $date.';
+  }
+
+  @override
+  String get notificationScheduleFailed =>
+      'Prayer reminders could not be updated. Existing reminders were kept.';
+
+  @override
+  String get notificationDelayedHint =>
+      'Reminders are enabled, but Android may delay them until exact alarm access is granted.';
+
+  @override
+  String get testNotificationScheduled =>
+      'Test scheduled. Lock the screen now; it will arrive in about 15 seconds.';
+
+  @override
+  String get openSystemSettings => 'Open system settings';
 }

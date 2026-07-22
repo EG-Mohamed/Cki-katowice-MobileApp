@@ -8,7 +8,10 @@ import '../data/audio/audio_handler.dart';
 import '../data/models/mp3quran.dart';
 
 class PlaybackProgress {
-  const PlaybackProgress({this.position = Duration.zero, this.duration = Duration.zero});
+  const PlaybackProgress({
+    this.position = Duration.zero,
+    this.duration = Duration.zero,
+  });
 
   final Duration position;
   final Duration duration;
@@ -20,12 +23,14 @@ class PlaybackProgress {
 }
 
 class QuranPlayerController extends ChangeNotifier {
-  QuranPlayerController(this._handler);
+  QuranPlayerController(this._handlerFactory);
 
   static const String _reciterKey = 'quran_reciter_id';
   static const String _moshafKey = 'quran_moshaf_id';
 
-  final QuranAudioHandler _handler;
+  final Future<QuranAudioHandler> Function() _handlerFactory;
+  QuranAudioHandler? _handler;
+  Future<QuranAudioHandler>? _initializingHandler;
   final ValueNotifier<PlaybackProgress> progress =
       ValueNotifier<PlaybackProgress>(const PlaybackProgress());
 
@@ -66,28 +71,40 @@ class QuranPlayerController extends ChangeNotifier {
   int? get restoredReciterId => _restoredReciterId;
   int? get restoredMoshafId => _restoredMoshafId;
 
-  void bindStreams() {
-    _handler.setOnComplete(_onComplete);
-    _handler.setOnError(_onError);
-    _handler.setSkipHandlers(onNext: next, onPrevious: previous);
-    _posSub = _handler.positionStream.listen((value) {
+  Future<QuranAudioHandler> _ensureHandler() async {
+    final existing = _handler;
+    if (existing != null) return existing;
+    final pending = _initializingHandler ??= _handlerFactory();
+    late final QuranAudioHandler handler;
+    try {
+      handler = await pending;
+    } catch (_) {
+      _initializingHandler = null;
+      rethrow;
+    }
+    _handler = handler;
+    handler.setOnComplete(_onComplete);
+    handler.setOnError(_onError);
+    handler.setSkipHandlers(onNext: next, onPrevious: previous);
+    _posSub = handler.positionStream.listen((value) {
       progress.value = PlaybackProgress(
         position: value,
         duration: progress.value.duration,
       );
     });
-    _durSub = _handler.durationStream.listen((value) {
+    _durSub = handler.durationStream.listen((value) {
       progress.value = PlaybackProgress(
         position: progress.value.position,
         duration: value ?? Duration.zero,
       );
     });
-    _playingSub = _handler.playingStream.listen((playing) {
+    _playingSub = handler.playingStream.listen((playing) {
       if (playing != _isPlaying) {
         _isPlaying = playing;
         notifyListeners();
       }
     });
+    return handler;
   }
 
   Future<void> load() async {
@@ -118,7 +135,8 @@ class QuranPlayerController extends ChangeNotifier {
     progress.value = const PlaybackProgress();
     notifyListeners();
     try {
-      await _handler.loadUrl(
+      final handler = await _ensureHandler();
+      await handler.loadUrl(
         url,
         MediaItem(id: url, title: name, album: 'Quran Radio'),
       );
@@ -133,10 +151,11 @@ class QuranPlayerController extends ChangeNotifier {
 
   Future<void> togglePlayPause() async {
     if (!hasTrack) return;
+    final handler = await _ensureHandler();
     if (_isPlaying) {
-      await _handler.pause();
+      await handler.pause();
     } else {
-      await _handler.play();
+      await handler.play();
     }
   }
 
@@ -152,11 +171,11 @@ class QuranPlayerController extends ChangeNotifier {
 
   Future<void> seek(Duration to) async {
     if (!hasTrack) return;
-    await _handler.seek(to);
+    await (await _ensureHandler()).seek(to);
   }
 
   Future<void> stop() async {
-    await _handler.stop();
+    await _handler?.stop();
     _index = -1;
     _radioName = null;
     _isPlaying = false;
@@ -179,8 +198,9 @@ class QuranPlayerController extends ChangeNotifier {
     progress.value = const PlaybackProgress();
     notifyListeners();
     try {
+      final handler = await _ensureHandler();
       final surah = _playlist[index];
-      await _handler.loadUrl(
+      await handler.loadUrl(
         moshaf.audioUrlFor(surah.id),
         MediaItem(
           id: '${moshaf.id}-${surah.id}',
@@ -225,7 +245,8 @@ class QuranPlayerController extends ChangeNotifier {
     _durSub?.cancel();
     _playingSub?.cancel();
     progress.dispose();
-    unawaited(_handler.disposePlayer());
+    final handler = _handler;
+    if (handler != null) unawaited(handler.disposePlayer());
     super.dispose();
   }
 }

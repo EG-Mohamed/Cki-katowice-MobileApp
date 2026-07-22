@@ -7,9 +7,11 @@ abstract class KhutbaService {
 }
 
 class ApiKhutbaService implements KhutbaService {
-  const ApiKhutbaService(this._api);
+  ApiKhutbaService(this._api);
 
   final ApiClient _api;
+  final Map<String, ({DateTime storedAt, Future<Khutba> value})> _detailCache =
+      {};
 
   @override
   Future<List<Khutba>> all() async {
@@ -21,7 +23,19 @@ class ApiKhutbaService implements KhutbaService {
   }
 
   @override
-  Future<Khutba> find(String slug) async {
+  Future<Khutba> find(String slug) {
+    final cached = _detailCache[slug];
+    if (cached != null &&
+        DateTime.now().difference(cached.storedAt) <
+            const Duration(minutes: 5)) {
+      return cached.value;
+    }
+    final future = _find(slug);
+    _detailCache[slug] = (storedAt: DateTime.now(), value: future);
+    return future;
+  }
+
+  Future<Khutba> _find(String slug) async {
     final data = await _api.get('/khutbas/${Uri.encodeComponent(slug)}');
     return Khutba.fromJson(data as Map<String, dynamic>);
   }

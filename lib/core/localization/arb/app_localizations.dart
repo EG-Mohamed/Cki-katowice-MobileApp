@@ -124,6 +124,12 @@ abstract class AppLocalizations {
   /// **'Qibla'**
   String get navQibla;
 
+  /// No description provided for @navRadio.
+  ///
+  /// In en, this message translates to:
+  /// **'Radio'**
+  String get navRadio;
+
   /// No description provided for @navQuran.
   ///
   /// In en, this message translates to:
@@ -397,7 +403,7 @@ abstract class AppLocalizations {
   /// No description provided for @prayerNotificationsDesc.
   ///
   /// In en, this message translates to:
-  /// **'Get notified at each prayer time.'**
+  /// **'Automatically delivered when each prayer countdown reaches zero.'**
   String get prayerNotificationsDesc;
 
   /// No description provided for @enableAll.
@@ -693,6 +699,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'For exact on-time reminders, allow \'Alarms & reminders\' for this app in system settings.'**
   String get exactAlarmHint;
+
+  /// No description provided for @notificationSyncing.
+  ///
+  /// In en, this message translates to:
+  /// **'Updating prayer reminders…'**
+  String get notificationSyncing;
+
+  /// No description provided for @notificationScheduled.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} reminders scheduled through {date}.'**
+  String notificationScheduled(Object count, Object date);
+
+  /// No description provided for @notificationScheduleFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Prayer reminders could not be updated. Existing reminders were kept.'**
+  String get notificationScheduleFailed;
+
+  /// No description provided for @notificationDelayedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders are enabled, but Android may delay them until exact alarm access is granted.'**
+  String get notificationDelayedHint;
+
+  /// No description provided for @testNotificationScheduled.
+  ///
+  /// In en, this message translates to:
+  /// **'Test scheduled. Lock the screen now; it will arrive in about 15 seconds.'**
+  String get testNotificationScheduled;
+
+  /// No description provided for @openSystemSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open system settings'**
+  String get openSystemSettings;
 }
 
 class _AppLocalizationsDelegate

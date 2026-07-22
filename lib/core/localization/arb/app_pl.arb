@@ -4,6 +4,7 @@
   "mosqueName": "Islamskie Centrum Kulturalne Katowice",
   "navHome": "Główna",
   "navQibla": "Kibla",
+  "navRadio": "Radio",
   "navQuran": "Koran",
   "navNews": "Aktualności",
   "navMore": "Więcej",
@@ -49,7 +50,7 @@
   "language": "Język",
   "notifications": "Powiadomienia",
   "prayerNotifications": "Przypomnienia o modlitwie",
-  "prayerNotificationsDesc": "Otrzymuj powiadomienie o każdej porze modlitwy.",
+  "prayerNotificationsDesc": "Automatycznie wysyłane, gdy odliczanie do modlitwy osiągnie zero.",
   "enableAll": "Wszystkie modlitwy",
   "about": "O aplikacji",
   "aboutBody": "Aplikacja dla społeczności CKI Katowice — czasy modlitw, kibla, Święty Koran, aktualności i piątkowa chutba.",
@@ -98,5 +99,11 @@
   "testNotification": "Wyślij powiadomienie testowe",
   "testNotificationBody": "Tak będą wyglądać przypomnienia o modlitwie.",
   "notificationPermissionDenied": "Wymagane jest pozwolenie na powiadomienia. Włącz je w ustawieniach systemu.",
-  "exactAlarmHint": "Aby przypomnienia były punktualne, zezwól tej aplikacji na 'Alarmy i przypomnienia' w ustawieniach systemu."
+  "exactAlarmHint": "Aby przypomnienia były punktualne, zezwól tej aplikacji na 'Alarmy i przypomnienia' w ustawieniach systemu.",
+  "notificationSyncing": "Aktualizowanie przypomnień o modlitwie…",
+  "notificationScheduled": "Zaplanowano {count} przypomnień do {date}.",
+  "notificationScheduleFailed": "Nie udało się zaktualizować przypomnień. Istniejące przypomnienia zachowano.",
+  "notificationDelayedHint": "Przypomnienia są włączone, ale Android może je opóźnić do czasu przyznania dostępu do dokładnych alarmów.",
+  "testNotificationScheduled": "Test zaplanowany. Zablokuj teraz ekran; powiadomienie pojawi się za około 15 sekund.",
+  "openSystemSettings": "Otwórz ustawienia systemowe"
 }
