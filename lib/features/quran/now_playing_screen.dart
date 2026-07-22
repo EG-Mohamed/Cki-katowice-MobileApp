@@ -6,8 +6,10 @@ import '../../core/localization/arb/app_localizations.dart';
 import '../../core/theme/app_gradients.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/brand_colors.dart';
+import '../../data/models/mp3quran.dart';
 import '../../shared/widgets/geometric_pattern.dart';
 import '../../state/quran_player_controller.dart';
+import '../../state/theme_controller.dart';
 
 class NowPlayingScreen extends StatelessWidget {
   const NowPlayingScreen({super.key});
@@ -91,25 +93,7 @@ class NowPlayingScreen extends StatelessWidget {
                     : Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Container(
-                            width: 150,
-                            height: 150,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.12),
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.3),
-                              ),
-                            ),
-                            child: Icon(
-                              controller.isPlaying
-                                  ? Icons.graphic_eq
-                                  : Icons.menu_book,
-                              color: Colors.white,
-                              size: 56,
-                            ),
-                          ),
+                          const _ArtworkIcon(),
                           const SizedBox(height: 28),
                           Text(
                             surah.name,
@@ -131,9 +115,9 @@ class NowPlayingScreen extends StatelessWidget {
                         ],
                       ),
               ),
-              _ProgressBar(controller: controller),
-              _Controls(controller: controller),
-              _BottomActions(controller: controller, l10n: l10n),
+              const _ProgressBar(),
+              const _Controls(),
+              _BottomActions(l10n: l10n),
               const SizedBox(height: 16),
             ],
           ),
@@ -178,6 +162,32 @@ class _ModeToggle extends StatelessWidget {
   }
 }
 
+class _ArtworkIcon extends StatelessWidget {
+  const _ArtworkIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    final isPlaying = context.select<QuranPlayerController, bool>(
+      (c) => c.isPlaying,
+    );
+    return Container(
+      width: 150,
+      height: 150,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.12),
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+      ),
+      child: Icon(
+        isPlaying ? Icons.graphic_eq : Icons.menu_book,
+        color: Colors.white,
+        size: 56,
+      ),
+    );
+  }
+}
+
 class _Segment extends StatelessWidget {
   const _Segment({
     required this.icon,
@@ -193,6 +203,7 @@ class _Segment extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
@@ -230,19 +241,22 @@ class _Segment extends StatelessWidget {
 }
 
 class _ProgressBar extends StatelessWidget {
-  const _ProgressBar({required this.controller});
-
-  final QuranPlayerController controller;
+  const _ProgressBar();
 
   @override
   Widget build(BuildContext context) {
+    final controller = context.read<QuranPlayerController>();
     return ValueListenableBuilder<PlaybackProgress>(
       valueListenable: controller.progress,
-      builder: (context, progress, _) => _build(context, progress),
+      builder: (context, progress, _) => _build(context, controller, progress),
     );
   }
 
-  Widget _build(BuildContext context, PlaybackProgress progress) {
+  Widget _build(
+    BuildContext context,
+    QuranPlayerController controller,
+    PlaybackProgress progress,
+  ) {
     final duration = progress.duration;
     final position = progress.position;
     final maxMs = duration.inMilliseconds.toDouble();
@@ -299,12 +313,21 @@ class _ProgressBar extends StatelessWidget {
 }
 
 class _Controls extends StatelessWidget {
-  const _Controls({required this.controller});
-
-  final QuranPlayerController controller;
+  const _Controls();
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
+    final controller = context.read<QuranPlayerController>();
+    final isPlaying = context.select<QuranPlayerController, bool>(
+      (c) => c.isPlaying,
+    );
+    final hasPrevious = context.select<QuranPlayerController, bool>(
+      (c) => c.hasPrevious,
+    );
+    final hasNext = context.select<QuranPlayerController, bool>(
+      (c) => c.hasNext,
+    );
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -312,7 +335,7 @@ class _Controls extends StatelessWidget {
         children: [
           IconButton(
             iconSize: 40,
-            onPressed: controller.hasPrevious ? controller.previous : null,
+            onPressed: hasPrevious ? controller.previous : null,
             icon: const Icon(Icons.skip_previous),
             color: Colors.white,
           ),
@@ -325,16 +348,14 @@ class _Controls extends StatelessWidget {
             child: IconButton(
               iconSize: 44,
               onPressed: controller.togglePlayPause,
-              icon: Icon(
-                controller.isPlaying ? Icons.pause : Icons.play_arrow,
-              ),
+              icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow),
               color: BrandColors.primary,
             ),
           ),
           const SizedBox(width: 12),
           IconButton(
             iconSize: 40,
-            onPressed: controller.hasNext ? controller.next : null,
+            onPressed: hasNext ? controller.next : null,
             icon: const Icon(Icons.skip_next),
             color: Colors.white,
           ),
@@ -345,14 +366,19 @@ class _Controls extends StatelessWidget {
 }
 
 class _BottomActions extends StatelessWidget {
-  const _BottomActions({required this.controller, required this.l10n});
+  const _BottomActions({required this.l10n});
 
-  final QuranPlayerController controller;
   final AppLocalizations l10n;
 
   @override
   Widget build(BuildContext context) {
-    final surah = controller.currentSurah;
+    final controller = context.read<QuranPlayerController>();
+    final surah = context.select<QuranPlayerController, MoshafSurah?>(
+      (c) => c.currentSurah,
+    );
+    final autoplayNext = context.select<QuranPlayerController, bool>(
+      (c) => c.autoplayNext,
+    );
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       child: Row(
@@ -361,7 +387,7 @@ class _BottomActions extends StatelessWidget {
           Row(
             children: [
               Switch(
-                value: controller.autoplayNext,
+                value: autoplayNext,
                 onChanged: controller.setAutoplayNext,
               ),
               Text(

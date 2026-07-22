@@ -7,6 +7,7 @@ import '../../data/models/mp3quran.dart';
 import '../../data/services/mp3quran_service.dart';
 import '../../shared/widgets/app_background.dart';
 import '../../state/quran_player_controller.dart';
+import '../../state/theme_controller.dart';
 
 class ReciterPickerScreen extends StatefulWidget {
   const ReciterPickerScreen({super.key});
@@ -45,7 +46,11 @@ class _ReciterPickerScreenState extends State<ReciterPickerScreen> {
     );
   }
 
-  Future<void> _select(Reciter reciter, Moshaf moshaf, List<MoshafSurah> suwar) async {
+  Future<void> _select(
+    Reciter reciter,
+    Moshaf moshaf,
+    List<MoshafSurah> suwar,
+  ) async {
     context.read<QuranPlayerController>().setReciter(reciter, moshaf, suwar);
     if (!mounted) return;
     Navigator.of(context).pop();
@@ -53,6 +58,7 @@ class _ReciterPickerScreenState extends State<ReciterPickerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     final l10n = AppLocalizations.of(context);
     return AppBackground(
       child: SafeArea(
@@ -149,7 +155,8 @@ class _ReciterPickerScreenState extends State<ReciterPickerScreen> {
     return reciters.where((reciter) {
       final matchesSearch =
           _search.isEmpty || reciter.name.toLowerCase().contains(_search);
-      final matchesRiwayah = _riwayahFilter == null ||
+      final matchesRiwayah =
+          _riwayahFilter == null ||
           reciter.moshaf.any((moshaf) => moshaf.moshafType == _riwayahFilter);
       return matchesSearch && matchesRiwayah;
     }).toList();
@@ -176,6 +183,7 @@ class _Scaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     return Column(
       children: [
         Padding(
@@ -207,6 +215,7 @@ class _RiwayahChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: ChoiceChip(
@@ -240,6 +249,7 @@ class _ReciterTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     final l10n = AppLocalizations.of(context);
     final moshaf = reciter.moshaf
         .where((m) => riwayahFilter == null || m.moshafType == riwayahFilter)

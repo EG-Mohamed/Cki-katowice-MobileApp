@@ -9,6 +9,7 @@ import '../../../core/theme/brand_colors.dart';
 import '../../../core/utils/prayer_labels.dart';
 import '../../../shared/widgets/geometric_pattern.dart';
 import '../../../state/prayer_controller.dart';
+import '../../../state/theme_controller.dart';
 
 class NextPrayerHero extends StatelessWidget {
   const NextPrayerHero({super.key});
@@ -36,7 +37,7 @@ class NextPrayerHero extends StatelessWidget {
                 decoration: BoxDecoration(gradient: AppGradients.hero),
               ),
             ),
-            Positioned.fill(
+            const Positioned.fill(
               child: GeometricPattern(
                 color: Colors.white,
                 opacity: 0.06,
@@ -133,6 +134,7 @@ class _TimePill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(

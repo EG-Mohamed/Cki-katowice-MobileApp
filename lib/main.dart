@@ -34,10 +34,26 @@ Future<void> main() async {
   final localeController = LocaleController(apiClient);
   final notificationController = NotificationController();
   final themeController = ThemeController();
+  final announcementController = AnnouncementController(
+    ApiAnnouncementService(apiClient),
+  );
+  final quranPlayerController = QuranPlayerController(
+    () => AudioService.init(
+      builder: () => QuranAudioHandler(),
+      config: const AudioServiceConfig(
+        androidNotificationChannelId: 'pl.ckikatowice.audio',
+        androidNotificationChannelName: 'Quran playback',
+        androidNotificationOngoing: true,
+        androidStopForegroundOnPause: true,
+      ),
+    ),
+  );
   await Future.wait([
     localeController.load(),
     notificationController.load(),
     themeController.load(),
+    announcementController.loadDismissed(),
+    quranPlayerController.load(),
   ]);
 
   final prayerService = ApiPrayerService(apiClient);
@@ -68,24 +84,6 @@ Future<void> main() async {
     }
   });
 
-  final announcementController = AnnouncementController(
-    ApiAnnouncementService(apiClient),
-  );
-  final quranPlayerController = QuranPlayerController(
-    () => AudioService.init(
-      builder: () => QuranAudioHandler(),
-      config: const AudioServiceConfig(
-        androidNotificationChannelId: 'pl.ckikatowice.audio',
-        androidNotificationChannelName: 'Quran playback',
-        androidNotificationOngoing: true,
-        androidStopForegroundOnPause: true,
-      ),
-    ),
-  );
-  await Future.wait([
-    announcementController.loadDismissed(),
-    quranPlayerController.load(),
-  ]);
   unawaited(announcementController.load());
 
   final settingsController = SettingsController(ApiSettingsService(apiClient));

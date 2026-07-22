@@ -7,6 +7,7 @@ import '../../../core/theme/brand_colors.dart';
 import '../../../core/utils/prayer_labels.dart';
 import '../../../data/models/prayer.dart';
 import '../../../state/prayer_controller.dart';
+import '../../../state/theme_controller.dart';
 
 class PrayerRow extends StatelessWidget {
   const PrayerRow({super.key, required this.slot, required this.isNext});
@@ -16,6 +17,7 @@ class PrayerRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     final l10n = AppLocalizations.of(context);
     final locale = Localizations.localeOf(context).toLanguageTag();
     final controller = context.read<PrayerController>();
@@ -107,6 +109,7 @@ class _PrayerIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     return Container(
       width: 36,
       height: 36,
@@ -158,6 +161,7 @@ class _TimePill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(

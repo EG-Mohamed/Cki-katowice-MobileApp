@@ -1,9 +1,11 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/theme/brand_colors.dart';
 import '../../../data/services/qibla_service.dart';
+import '../../../state/theme_controller.dart';
 
 class CompassDial extends StatelessWidget {
   const CompassDial({
@@ -17,6 +19,7 @@ class CompassDial extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     final aligned = reading?.isAligned ?? false;
     final needle = (reading?.needleAngle ?? 0) * math.pi / 180;
     final heading = (reading?.heading ?? 0) * math.pi / 180;
@@ -34,7 +37,7 @@ class CompassDial extends StatelessWidget {
                 duration: const Duration(milliseconds: 200),
                 child: CustomPaint(
                   size: const Size(280, 280),
-                  painter: _DialPainter(),
+                  painter: _DialPainter(isDark: BrandColors.isDark),
                 ),
               ),
               Container(
@@ -102,6 +105,10 @@ class CompassDial extends StatelessWidget {
 }
 
 class _DialPainter extends CustomPainter {
+  _DialPainter({required this.isDark});
+
+  final bool isDark;
+
   @override
   void paint(Canvas canvas, Size size) {
     final center = size.center(Offset.zero);
@@ -129,7 +136,7 @@ class _DialPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_) => false;
+  bool shouldRepaint(_DialPainter oldDelegate) => oldDelegate.isDark != isDark;
 }
 
 class _NeedlePainter extends CustomPainter {

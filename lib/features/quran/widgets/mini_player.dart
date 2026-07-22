@@ -6,15 +6,21 @@ import '../../../core/theme/brand_colors.dart';
 import '../../../data/models/mp3quran.dart';
 import '../../../shared/shell_scope.dart';
 import '../../../state/quran_player_controller.dart';
+import '../../../state/theme_controller.dart';
 
 class MiniPlayer extends StatelessWidget {
-  const MiniPlayer({super.key, required this.onOpenSurah, required this.onOpenRadio});
+  const MiniPlayer({
+    super.key,
+    required this.onOpenSurah,
+    required this.onOpenRadio,
+  });
 
   final ValueChanged<int> onOpenSurah;
   final VoidCallback onOpenRadio;
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     final controller = context.watch<QuranPlayerController>();
     if (!controller.hasTrack) return const SizedBox.shrink();
 

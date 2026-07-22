@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../core/theme/brand_colors.dart';
+import '../../state/theme_controller.dart';
 
 class SplashGate extends StatefulWidget {
   const SplashGate({super.key, required this.ready, required this.child});
@@ -46,6 +48,7 @@ class _Splash extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     return ColoredBox(
       color: BrandColors.primary,
       child: Center(

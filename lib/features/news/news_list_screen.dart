@@ -10,6 +10,7 @@ import '../../core/theme/brand_colors.dart';
 import '../../data/models/content.dart';
 import '../../data/services/news_service.dart';
 import '../../shared/widgets/app_background.dart';
+import '../../state/theme_controller.dart';
 
 class NewsListScreen extends StatefulWidget {
   const NewsListScreen({super.key});
@@ -147,6 +148,7 @@ class _NewsListScreenState extends State<NewsListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     final l10n = AppLocalizations.of(context);
     return AppBackground(
       child: SafeArea(
@@ -246,6 +248,7 @@ class _NewsFilters extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
@@ -332,6 +335,7 @@ class _NewsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     final l10n = AppLocalizations.of(context);
     final locale = Localizations.localeOf(context).toLanguageTag();
     final date = DateFormat.yMMMMd(locale).format(item.date);
@@ -470,6 +474,7 @@ class _ImageFallback extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     return DecoratedBox(
       decoration: BoxDecoration(
         gradient: LinearGradient(

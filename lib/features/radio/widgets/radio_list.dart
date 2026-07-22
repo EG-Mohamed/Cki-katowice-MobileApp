@@ -6,12 +6,13 @@ import '../../../core/theme/brand_colors.dart';
 import '../../../data/models/mp3quran.dart';
 import '../../../data/services/mp3quran_service.dart';
 import '../../../state/quran_player_controller.dart';
+import '../../../state/theme_controller.dart';
 
 const List<QuranRadio> customRadios = [
   QuranRadio(
     id: -1,
     name: 'إذاعة القرآن - القاهرة',
-    url: 'https://stream.radiojar.com/8s5u5tpdtwzuv',
+    url: 'https://quran.yousefheiba.com/api/radio',
   ),
 ];
 
@@ -62,8 +63,12 @@ class _RadioListState extends State<RadioList> {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     final l10n = AppLocalizations.of(context);
-    final controller = context.watch<QuranPlayerController>();
+    final (isRadio, radioName, isPlaying) = context
+        .select<QuranPlayerController, (bool, String?, bool)>(
+          (c) => (c.isRadio, c.radioName, c.isPlaying),
+        );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -137,8 +142,7 @@ class _RadioListState extends State<RadioList> {
                     Divider(color: BrandColors.border, height: 12),
                 itemBuilder: (context, i) {
                   final radio = radios[i];
-                  final active =
-                      controller.isRadio && controller.radioName == radio.name;
+                  final active = isRadio && radioName == radio.name;
                   return ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: Icon(
@@ -153,9 +157,7 @@ class _RadioListState extends State<RadioList> {
                       ),
                     ),
                     trailing: Icon(
-                      active && controller.isPlaying
-                          ? Icons.graphic_eq
-                          : Icons.play_arrow,
+                      active && isPlaying ? Icons.graphic_eq : Icons.play_arrow,
                       color: BrandColors.primary,
                     ),
                     onTap: () {

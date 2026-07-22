@@ -1,11 +1,13 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/localization/arb/app_localizations.dart';
 import '../../../core/theme/brand_colors.dart';
 import '../../../data/models/content.dart';
+import '../../../state/theme_controller.dart';
 
 class AboutSection extends StatelessWidget {
   const AboutSection({
@@ -105,6 +107,7 @@ class _ContactCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     final rows = <Widget>[];
     if (data.primaryPhone.isNotEmpty) {
       rows.add(
@@ -154,6 +157,7 @@ class _SocialRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     const icons = {
       'facebook': Icons.facebook,
       'twitter': Icons.alternate_email,
@@ -188,6 +192,7 @@ class _LocationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     final l10n = AppLocalizations.of(context);
     final lat = data.latitude!;
     final lng = data.longitude!;
@@ -245,6 +250,7 @@ class _StaticMap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     final n = math.pow(2, _zoom).toDouble();
     final latRad = lat * math.pi / 180;
     final x = ((lng + 180) / 360 * n).floor();
@@ -293,6 +299,7 @@ class _LinkRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     return InkWell(
       onTap: onTap,
       child: Row(
@@ -317,6 +324,7 @@ class _LinkRow extends StatelessWidget {
 class _LogoFallback extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     return Container(
       width: 48,
       height: 48,
@@ -338,6 +346,7 @@ class _Card extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     return Container(
       padding: padding,
       decoration: BoxDecoration(

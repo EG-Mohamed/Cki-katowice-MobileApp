@@ -5,12 +5,14 @@ import '../../core/localization/arb/app_localizations.dart';
 import '../../core/theme/brand_colors.dart';
 import '../../data/models/content.dart';
 import '../../state/announcement_controller.dart';
+import '../../state/theme_controller.dart';
 
 class AnnouncementBanner extends StatelessWidget {
   const AnnouncementBanner({super.key});
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     final controller = context.watch<AnnouncementController>();
     final announcement = controller.top;
     if (announcement == null) return const SizedBox.shrink();

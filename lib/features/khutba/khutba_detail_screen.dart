@@ -8,6 +8,7 @@ import '../../core/theme/brand_colors.dart';
 import '../../data/models/content.dart';
 import '../../data/services/khutba_service.dart';
 import '../../shared/widgets/app_background.dart';
+import '../../state/theme_controller.dart';
 
 class KhutbaDetailScreen extends StatefulWidget {
   const KhutbaDetailScreen({super.key, required this.slug});
@@ -33,6 +34,7 @@ class _KhutbaDetailScreenState extends State<KhutbaDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     final l10n = AppLocalizations.of(context);
     final locale = Localizations.localeOf(context).toLanguageTag();
     return AppBackground(

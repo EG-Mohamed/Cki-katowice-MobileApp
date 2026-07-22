@@ -12,6 +12,7 @@ import '../../data/models/content.dart';
 import '../../data/services/quran_service.dart';
 import '../../shared/widgets/app_background.dart';
 import '../../state/quran_player_controller.dart';
+import '../../state/theme_controller.dart';
 
 class ReaderScreen extends StatefulWidget {
   const ReaderScreen({super.key, required this.surahNumber});
@@ -93,7 +94,8 @@ class _ReaderScreenState extends State<ReaderScreen> {
     }
     await _player.stop();
     if (mounted) setState(() => _clearPlaybackState());
-    final isCurrent = controller.currentSurah?.id == widget.surahNumber &&
+    final isCurrent =
+        controller.currentSurah?.id == widget.surahNumber &&
         controller.isPlaying;
     if (isCurrent) {
       await controller.togglePlayPause();
@@ -126,10 +128,12 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     final l10n = AppLocalizations.of(context);
-    final player = context.watch<QuranPlayerController>();
-    final isPlayingSurah = player.currentSurah?.id == widget.surahNumber &&
-        player.isPlaying;
+    final isPlayingSurah = context.select<QuranPlayerController, bool>(
+      (player) =>
+          player.currentSurah?.id == widget.surahNumber && player.isPlaying,
+    );
     return AppBackground(
       child: SafeArea(
         child: FutureBuilder<Surah>(
@@ -197,6 +201,7 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 4, 20, 0),
       child: Row(
@@ -262,6 +267,7 @@ class _Controls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
       child: Column(
@@ -326,6 +332,7 @@ class _AyahView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

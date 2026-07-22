@@ -11,6 +11,7 @@ import '../../data/services/mp3quran_service.dart';
 import '../../data/services/quran_service.dart';
 import '../../shared/widgets/app_background.dart';
 import '../../state/quran_player_controller.dart';
+import '../../state/theme_controller.dart';
 
 class SurahListScreen extends StatefulWidget {
   const SurahListScreen({super.key});
@@ -110,8 +111,12 @@ class _SurahListScreenState extends State<SurahListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     final l10n = AppLocalizations.of(context);
-    final controller = context.watch<QuranPlayerController>();
+    final (reciter, moshaf, currentSurahId) = context
+        .select<QuranPlayerController, (Reciter?, Moshaf?, int?)>(
+          (c) => (c.reciter, c.moshaf, c.currentSurah?.id),
+        );
     return AppBackground(
       child: SafeArea(
         child: FutureBuilder<List<Surah>>(
@@ -129,10 +134,7 @@ class _SurahListScreenState extends State<SurahListScreen> {
                     title: Text(l10n.quranReader),
                   ),
                   SliverToBoxAdapter(
-                    child: _ReciterBar(
-                      reciter: controller.reciter,
-                      onTap: _openReciters,
-                    ),
+                    child: _ReciterBar(reciter: reciter, onTap: _openReciters),
                   ),
                   SliverToBoxAdapter(
                     child: _SearchField(
@@ -175,16 +177,16 @@ class _SurahListScreenState extends State<SurahListScreen> {
                         separatorBuilder: (_, _) => const SizedBox(height: 10),
                         itemBuilder: (context, i) {
                           final surah = surahs[i];
-                          final moshaf = controller.moshaf;
                           final available =
                               moshaf == null || moshaf.hasSurah(surah.number);
                           return _SurahTile(
                             surah: surah,
                             available: available,
-                            isCurrent:
-                                controller.currentSurah?.id == surah.number,
+                            isCurrent: currentSurahId == surah.number,
                             onTap: () => context.go('/quran/${surah.number}'),
-                            onPlay: available ? () => _play(surah.number) : null,
+                            onPlay: available
+                                ? () => _play(surah.number)
+                                : null,
                           );
                         },
                       ),
@@ -212,6 +214,7 @@ class _SearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
       child: TextField(
@@ -261,6 +264,7 @@ class _ReciterBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
@@ -341,6 +345,7 @@ class _SurahTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     final l10n = AppLocalizations.of(context);
     return Material(
       color: Colors.transparent,
@@ -421,6 +426,7 @@ class _StarBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     return Container(
       width: 42,
       height: 42,

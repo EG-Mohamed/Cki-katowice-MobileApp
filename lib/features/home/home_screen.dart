@@ -12,6 +12,7 @@ import '../../state/locale_controller.dart';
 import '../../state/prayer_controller.dart';
 import '../../state/prayer_notification_coordinator.dart';
 import '../../state/settings_controller.dart';
+import '../../state/theme_controller.dart';
 import 'widgets/next_prayer_hero.dart';
 import 'widgets/prayer_row.dart';
 
@@ -36,6 +37,7 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     final l10n = AppLocalizations.of(context);
     final controller = context.watch<PrayerController>();
     final day = controller.day;
@@ -141,6 +143,7 @@ class _Greeting extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     final languageCode = Localizations.localeOf(context).languageCode;
     final locale = Localizations.localeOf(context).toLanguageTag();
     final now = DateTime.now();
@@ -198,6 +201,7 @@ class _Logo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     final fallback = Container(
       width: 46,
       height: 46,
@@ -231,6 +235,7 @@ class _LanguageButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     final l10n = AppLocalizations.of(context);
     final current = context.watch<LocaleController>().locale.languageCode;
     final options = [
@@ -287,6 +292,7 @@ class _ScheduleHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     final l10n = AppLocalizations.of(context);
     final locale = Localizations.localeOf(context).toLanguageTag();
     final date = DateFormat.yMMMMEEEEd(locale).format(day);

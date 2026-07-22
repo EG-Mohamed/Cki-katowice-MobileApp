@@ -5,6 +5,7 @@ import '../../core/localization/arb/app_localizations.dart';
 import '../../core/theme/brand_colors.dart';
 import '../../data/services/qibla_service.dart';
 import '../../shared/widgets/app_background.dart';
+import '../../state/theme_controller.dart';
 import 'widgets/compass_dial.dart';
 
 class QiblaScreen extends StatefulWidget {
@@ -41,6 +42,7 @@ class _QiblaScreenState extends State<QiblaScreen> {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     final l10n = AppLocalizations.of(context);
     return AppBackground(
       child: SafeArea(

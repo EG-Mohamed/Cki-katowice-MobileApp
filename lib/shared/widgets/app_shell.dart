@@ -8,6 +8,7 @@ import '../../core/localization/arb/app_localizations.dart';
 import '../../core/theme/brand_colors.dart';
 import '../../core/utils/prayer_labels.dart';
 import '../../state/prayer_controller.dart';
+import '../../state/theme_controller.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({super.key, required this.navigationShell});
@@ -93,6 +94,7 @@ class _NavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     return Container(
       decoration: BoxDecoration(
         color: BrandColors.surface,
@@ -145,6 +147,7 @@ class _HomeButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     final l10n = AppLocalizations.of(context);
     final controller = context.watch<PrayerController>();
     final next = controller.nextPrayer;
@@ -242,6 +245,7 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     final color = selected ? BrandColors.primary : BrandColors.textMuted;
     return InkWell(
       onTap: onTap,

@@ -11,6 +11,7 @@ import '../../data/services/khutba_service.dart';
 import '../../shared/widgets/app_background.dart';
 import '../../shared/widgets/geometric_pattern.dart';
 import '../../shared/widgets/section_header.dart';
+import '../../state/theme_controller.dart';
 
 class KhutbaListScreen extends StatefulWidget {
   const KhutbaListScreen({super.key});
@@ -43,6 +44,7 @@ class _KhutbaListScreenState extends State<KhutbaListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     final l10n = AppLocalizations.of(context);
     return AppBackground(
       child: SafeArea(
@@ -154,6 +156,7 @@ class _FeaturedKhutba extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     final l10n = AppLocalizations.of(context);
     final locale = Localizations.localeOf(context).toLanguageTag();
     final date = DateFormat.yMMMMEEEEd(locale).format(khutba.date);
@@ -178,7 +181,7 @@ class _FeaturedKhutba extends StatelessWidget {
                   ),
                 ),
               ),
-              Positioned.fill(
+              const Positioned.fill(
                 child: GeometricPattern(
                   color: BrandColors.accent,
                   opacity: 0.10,
@@ -231,6 +234,7 @@ class _KhutbaTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>();
     final locale = Localizations.localeOf(context).toLanguageTag();
     final date = DateFormat.yMMMd(locale).format(khutba.date);
     return Material(
