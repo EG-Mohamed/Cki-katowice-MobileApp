@@ -129,6 +129,7 @@ class QuranPlayerController extends ChangeNotifier {
   }
 
   Future<void> playRadio(String name, String url) async {
+    debugPrint('[QuranPlayer] playRadio start: name=$name url=$url');
     _isLoading = true;
     _radioName = name;
     _index = -1;
@@ -140,7 +141,10 @@ class QuranPlayerController extends ChangeNotifier {
         url,
         MediaItem(id: url, title: name, album: 'Quran Radio'),
       );
-    } catch (_) {
+      debugPrint('[QuranPlayer] playRadio loadUrl succeeded: name=$name');
+    } catch (e, st) {
+      debugPrint('[QuranPlayer] playRadio FAILED: name=$name url=$url error=$e');
+      debugPrint('[QuranPlayer] stack: $st');
       _radioName = null;
       _isPlaying = false;
     } finally {

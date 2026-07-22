@@ -19,126 +19,126 @@ class NowPlayingScreen extends StatelessWidget {
     final surah = controller.currentSurah;
     final reciter = controller.reciter;
 
-    return Scaffold(
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(gradient: AppGradients.hero),
-            ),
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: DecoratedBox(
+            decoration: BoxDecoration(gradient: AppGradients.hero),
           ),
-          const Positioned.fill(
-            child: GeometricPattern(color: Colors.white, opacity: 0.06),
-          ),
-          SafeArea(
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(4, 4, 16, 0),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        onPressed: () => Navigator.of(context).maybePop(),
-                        icon: const Icon(Icons.keyboard_arrow_down),
+        ),
+        const Positioned.fill(
+          child: GeometricPattern(color: Colors.white, opacity: 0.06),
+        ),
+        SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(4, 4, 16, 0),
+                child: Row(
+                  children: [
+                    IconButton(
+                      onPressed: () => Navigator.of(context).maybePop(),
+                      icon: const Icon(Icons.keyboard_arrow_down),
+                      color: Colors.white,
+                    ),
+                    const Spacer(),
+                    Text(
+                      controller.isRadio ? l10n.radios : l10n.nowPlaying,
+                      style: const TextStyle(
                         color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.4,
                       ),
-                      const Spacer(),
-                      Text(
-                        controller.isRadio ? l10n.radios : l10n.nowPlaying,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.4,
-                        ),
-                      ),
-                      const Spacer(),
-                      const SizedBox(width: 48),
-                    ],
-                  ),
+                    ),
+                    const Spacer(),
+                    const SizedBox(width: 48),
+                  ],
                 ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
-                  child: _ModeToggle(controller: controller, l10n: l10n),
-                ),
-                Expanded(
-                  child: surah == null
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                controller.isRadio ? Icons.radio : Icons.menu_book,
-                                color: Colors.white,
-                                size: 64,
-                              ),
-                              const SizedBox(height: 20),
-                              Text(
-                                controller.isRadio
-                                    ? (controller.radioName ?? l10n.radios)
-                                    : l10n.noReciterSelected,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      : Column(
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+                child: _ModeToggle(controller: controller, l10n: l10n),
+              ),
+              Expanded(
+                child: surah == null
+                    ? Center(
+                        child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Container(
-                              width: 150,
-                              height: 150,
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.12),
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.3),
-                                ),
-                              ),
-                              child: Icon(
-                                controller.isPlaying
-                                    ? Icons.graphic_eq
-                                    : Icons.menu_book,
-                                color: Colors.white,
-                                size: 56,
-                              ),
+                            Icon(
+                              controller.isRadio
+                                  ? Icons.radio
+                                  : Icons.menu_book,
+                              color: Colors.white,
+                              size: 64,
                             ),
-                            const SizedBox(height: 28),
+                            const SizedBox(height: 20),
                             Text(
-                              surah.name,
-                              textAlign: TextAlign.center,
-                              style: AppTheme.arabicQuran(
-                                size: 34,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              reciter?.name ?? '',
+                              controller.isRadio
+                                  ? (controller.radioName ?? l10n.radios)
+                                  : l10n.noReciterSelected,
                               textAlign: TextAlign.center,
                               style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 14,
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],
                         ),
-                ),
-                _ProgressBar(controller: controller),
-                _Controls(controller: controller),
-                _BottomActions(controller: controller, l10n: l10n),
-                const SizedBox(height: 16),
-              ],
-            ),
+                      )
+                    : Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 150,
+                            height: 150,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.12),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.3),
+                              ),
+                            ),
+                            child: Icon(
+                              controller.isPlaying
+                                  ? Icons.graphic_eq
+                                  : Icons.menu_book,
+                              color: Colors.white,
+                              size: 56,
+                            ),
+                          ),
+                          const SizedBox(height: 28),
+                          Text(
+                            surah.name,
+                            textAlign: TextAlign.center,
+                            style: AppTheme.arabicQuran(
+                              size: 34,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            reciter?.name ?? '',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
+              _ProgressBar(controller: controller),
+              _Controls(controller: controller),
+              _BottomActions(controller: controller, l10n: l10n),
+              const SizedBox(height: 16),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

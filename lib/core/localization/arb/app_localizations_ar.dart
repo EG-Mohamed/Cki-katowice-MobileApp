@@ -68,6 +68,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get jumuah => 'الجمعة';
 
   @override
+  String get adhan => 'الأذان';
+
+  @override
+  String get iqamah => 'الإقامة';
+
+  @override
   String get todaySchedule => 'مواقيت اليوم';
 
   @override

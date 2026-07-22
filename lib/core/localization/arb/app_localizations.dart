@@ -214,6 +214,18 @@ abstract class AppLocalizations {
   /// **'Jumu\'ah'**
   String get jumuah;
 
+  /// No description provided for @adhan.
+  ///
+  /// In en, this message translates to:
+  /// **'Adhan'**
+  String get adhan;
+
+  /// No description provided for @iqamah.
+  ///
+  /// In en, this message translates to:
+  /// **'Iqamah'**
+  String get iqamah;
+
   /// No description provided for @todaySchedule.
   ///
   /// In en, this message translates to:

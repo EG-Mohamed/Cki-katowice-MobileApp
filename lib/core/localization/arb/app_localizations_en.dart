@@ -68,6 +68,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get jumuah => 'Jumu\'ah';
 
   @override
+  String get adhan => 'Adhan';
+
+  @override
+  String get iqamah => 'Iqamah';
+
+  @override
   String get todaySchedule => 'Today\'s schedule';
 
   @override

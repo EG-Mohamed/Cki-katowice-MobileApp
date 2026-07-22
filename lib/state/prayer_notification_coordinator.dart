@@ -463,6 +463,7 @@ class PrayerNotificationCoordinator extends ChangeNotifier
         PrayerName.asr => 'العصر',
         PrayerName.maghrib => 'المغرب',
         PrayerName.isha => 'العشاء',
+        PrayerName.jumuah => 'الجمعة',
       },
       'pl' => switch (name) {
         PrayerName.fajr => 'Fadżr',
@@ -471,8 +472,12 @@ class PrayerNotificationCoordinator extends ChangeNotifier
         PrayerName.asr => 'Asr',
         PrayerName.maghrib => 'Maghrib',
         PrayerName.isha => 'Isza',
+        PrayerName.jumuah => 'Dżumu\'a',
       },
-      _ => name.name[0].toUpperCase() + name.name.substring(1),
+      _ =>
+        name == PrayerName.jumuah
+            ? 'Jumu\'ah'
+            : name.name[0].toUpperCase() + name.name.substring(1),
     };
   }
 

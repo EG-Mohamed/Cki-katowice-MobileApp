@@ -1,5 +1,6 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
+import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 
 class QuranAudioHandler extends BaseAudioHandler {
@@ -8,6 +9,7 @@ class QuranAudioHandler extends BaseAudioHandler {
     _player.playbackEventStream.listen(
       _broadcastState,
       onError: (Object error, StackTrace stackTrace) {
+        debugPrint('[QuranAudioHandler] playbackEventStream error: $error');
         _onError?.call();
       },
     );
@@ -44,7 +46,9 @@ class QuranAudioHandler extends BaseAudioHandler {
 
   Future<void> loadUrl(String url, MediaItem item) async {
     mediaItem.add(item);
+    debugPrint('[QuranAudioHandler] setUrl: $url');
     await _player.setUrl(url);
+    debugPrint('[QuranAudioHandler] setUrl succeeded, calling play(): $url');
     await _player.play();
   }
 

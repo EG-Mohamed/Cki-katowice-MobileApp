@@ -68,6 +68,12 @@ class AppLocalizationsPl extends AppLocalizations {
   String get jumuah => 'Dżumu\'a';
 
   @override
+  String get adhan => 'Adhan';
+
+  @override
+  String get iqamah => 'Ikama';
+
+  @override
   String get todaySchedule => 'Dzisiejszy plan';
 
   @override

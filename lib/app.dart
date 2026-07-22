@@ -5,10 +5,10 @@ import 'package:provider/provider.dart';
 import 'core/localization/arb/app_localizations.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
-import 'core/theme/brand_colors.dart';
 import 'features/announcements/announcement_banner.dart';
 import 'features/quran/widgets/mini_player.dart';
 import 'shared/shell_scope.dart';
+import 'state/announcement_controller.dart';
 import 'state/locale_controller.dart';
 import 'state/theme_controller.dart';
 
@@ -73,11 +73,13 @@ class _CkiAppState extends State<CkiApp> {
       theme: AppTheme.build(locale, isDark: isDark),
       routerConfig: _router,
       builder: (context, child) {
+        final hasAnnouncement =
+            context.watch<AnnouncementController>().top != null;
         return Scaffold(
-          // color: BrandColors.scaffold,
           body: Column(
             children: [
-              SafeArea(bottom: false, child: const AnnouncementBanner()),
+              if (hasAnnouncement)
+                SafeArea(bottom: false, child: const AnnouncementBanner()),
               Expanded(
                 child: Stack(
                   children: [

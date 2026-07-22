@@ -15,5 +15,7 @@ String prayerLabel(AppLocalizations l10n, PrayerName name) {
       return l10n.maghrib;
     case PrayerName.isha:
       return l10n.isha;
+    case PrayerName.jumuah:
+      return l10n.jumuah;
   }
 }
