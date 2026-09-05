@@ -26,7 +26,7 @@ class NextPrayerHero extends StatelessWidget {
     }
 
     final locale = Localizations.localeOf(context).toLanguageTag();
-    final timeLabel = DateFormat.Hm(locale).format(next.dateTimeOn(day.date));
+    final timeLabel = DateFormat.Hm(locale).format(controller.nextPrayerAt!);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
       child: ClipRRect(
@@ -87,7 +87,9 @@ class NextPrayerHero extends StatelessWidget {
                             fontWeight: FontWeight.w800,
                             height: 1.05,
                           ),
-                        )
+                        ),
+                        const SizedBox(height: 6),
+                        _TimePill(label: timeLabel),
                       ],
                     ),
                   ),

@@ -84,7 +84,7 @@ class _SurahListScreenState extends State<SurahListScreen> {
         (item) => item.id == moshafId,
         orElse: () => reciter.moshaf.first,
       );
-      if (!mounted) return;
+      if (!mounted || controller.reciter != null) return;
       controller.setReciter(reciter, moshaf, suwar);
     } catch (_) {}
   }

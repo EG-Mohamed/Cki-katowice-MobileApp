@@ -3,6 +3,9 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:intl/intl.dart' show DateFormat;
+import 'package:timezone/timezone.dart' as tz;
+import '../../core/utils/prayer_time.dart';
 
 import '../../core/localization/arb/app_localizations.dart';
 import '../../core/theme/brand_colors.dart';
@@ -125,6 +128,8 @@ class SettingsScreen extends StatelessWidget {
                         ),
                         Divider(color: BrandColors.border, height: 24),
                         _PrayerMuteList(notif: notif, l10n: l10n),
+                        const Divider(),
+                        _NotificationActions(notif: notif),
                       ],
                     ),
                   ),
@@ -222,6 +227,96 @@ class _NotificationStatus extends StatelessWidget {
               onPressed: onFix,
               child: Text(l10n.openSystemSettings),
             ),
+          ),
+      ],
+    );
+  }
+}
+
+class _NotificationActions extends StatefulWidget {
+  const _NotificationActions({required this.notif});
+  final PrayerNotificationCoordinator notif;
+  @override
+  State<_NotificationActions> createState() => _NotificationActionsState();
+}
+
+class _NotificationActionsState extends State<_NotificationActions> {
+  bool _testing = false;
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final notif = widget.notif;
+    final status = notif.status;
+    final formatter = DateFormat.yMd(
+      Localizations.localeOf(context).toLanguageTag(),
+    ).add_Hm();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (notif.enabled.isEmpty) Text(l10n.notificationsAllOff),
+        if (status.nextNotification != null)
+          Text(
+            l10n.notificationNextAt(
+              formatter.format(
+                tz.TZDateTime.from(status.nextNotification!, prayerLocation),
+              ),
+            ),
+          ),
+        if (status.lastRefresh != null)
+          Text(
+            l10n.notificationLastRefresh(
+              formatter.format(status.lastRefresh!.toLocal()),
+            ),
+          ),
+        const SizedBox(height: 8),
+        Text(
+          l10n.notificationReliabilityHelp,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        Wrap(
+          spacing: 8,
+          children: [
+            TextButton.icon(
+              onPressed: status.syncState == PrayerNotificationSyncState.syncing
+                  ? null
+                  : () => notif.synchronize(requestPermissions: true),
+              icon: const Icon(Icons.refresh),
+              label: Text(l10n.refreshReminders),
+            ),
+            TextButton.icon(
+              onPressed: _testing
+                  ? null
+                  : () async {
+                      setState(() => _testing = true);
+                      final result = await notif.scheduleLockScreenTest(
+                        title: l10n.prayerNotifications,
+                        body: l10n.testLockedScreen,
+                      );
+                      if (!context.mounted) return;
+                      setState(() => _testing = false);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            result
+                                ? l10n.notificationTestScheduled
+                                : l10n.notificationTestFailed,
+                          ),
+                        ),
+                      );
+                    },
+              icon: const Icon(Icons.screen_lock_portrait),
+              label: Text(l10n.testLockedScreen),
+            ),
+            TextButton(
+              onPressed: openAppSettings,
+              child: Text(l10n.openSystemSettings),
+            ),
+          ],
+        ),
+        if (status.lastError != null)
+          SelectableText(
+            status.lastError!,
+            style: Theme.of(context).textTheme.bodySmall,
           ),
       ],
     );

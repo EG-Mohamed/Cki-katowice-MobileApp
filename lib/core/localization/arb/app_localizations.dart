@@ -759,6 +759,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open system settings'**
   String get openSystemSettings;
+
+  /// No description provided for @notificationCoverageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Prayer reminders need a refresh'**
+  String get notificationCoverageTitle;
+
+  /// No description provided for @notificationCoverageBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Open CKI Katowice to refresh upcoming prayer reminders.'**
+  String get notificationCoverageBody;
+
+  /// No description provided for @refreshReminders.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh reminders'**
+  String get refreshReminders;
+
+  /// No description provided for @testLockedScreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Test with screen locked'**
+  String get testLockedScreen;
+
+  /// No description provided for @notificationTestScheduled.
+  ///
+  /// In en, this message translates to:
+  /// **'Lock your screen. A test notification is scheduled for 15 seconds from now.'**
+  String get notificationTestScheduled;
+
+  /// No description provided for @notificationTestFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not schedule the test. Check notification permissions and try again.'**
+  String get notificationTestFailed;
+
+  /// No description provided for @notificationNextAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Next reminder (Katowice): {time}'**
+  String notificationNextAt(String time);
+
+  /// No description provided for @notificationLastRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Last refresh: {time}'**
+  String notificationLastRefresh(String time);
+
+  /// No description provided for @notificationsAllOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications are turned off for all prayers.'**
+  String get notificationsAllOff;
+
+  /// No description provided for @notificationReliabilityHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Prayer reminders are scheduled on your phone. Background refresh extends coverage when the system allows it. Check notification and battery settings if alerts are delayed.'**
+  String get notificationReliabilityHelp;
+
+  /// No description provided for @qiblaLocationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Location could not be obtained. Enable location services and try again.'**
+  String get qiblaLocationFailed;
+
+  /// No description provided for @qiblaCompassUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This device has no available compass reading.'**
+  String get qiblaCompassUnavailable;
+
+  /// No description provided for @retryAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get retryAction;
+
+  /// No description provided for @playbackFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Playback failed. Check your connection and try again.'**
+  String get playbackFailed;
 }
 
 class _AppLocalizationsDelegate

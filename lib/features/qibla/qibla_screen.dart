@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/localization/arb/app_localizations.dart';
@@ -15,29 +17,63 @@ class QiblaScreen extends StatefulWidget {
   State<QiblaScreen> createState() => _QiblaScreenState();
 }
 
-class _QiblaScreenState extends State<QiblaScreen> {
+class _QiblaScreenState extends State<QiblaScreen> with WidgetsBindingObserver {
   late final QiblaService _service;
   bool _granted = false;
   bool _loading = true;
+  bool _locationFailed = false;
+  Stream<QiblaReading>? _readings;
+  int _generation = 0;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _service = context.read<QiblaService>();
     _prepare();
   }
 
   Future<void> _prepare() async {
-    final granted = await _service.ensurePermission();
-    if (granted) {
-      await _service.resolveLocation();
-    }
-    if (mounted) {
+    final generation = ++_generation;
+    try {
+      final granted = await _service.ensurePermission();
+      if (granted) await _service.resolveLocation();
+      if (!mounted || generation != _generation) return;
       setState(() {
         _granted = granted;
+        _locationFailed = false;
+        _loading = false;
+        _readings = granted
+            ? _service.readings().timeout(const Duration(seconds: 10))
+            : null;
+      });
+    } catch (_) {
+      if (!mounted || generation != _generation) return;
+      setState(() {
+        _locationFailed = true;
         _loading = false;
       });
     }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!mounted) return;
+    if (state == AppLifecycleState.resumed) {
+      if (!_loading) {
+        setState(() => _loading = true);
+        unawaited(_prepare());
+      }
+    } else {
+      setState(() => _readings = null);
+    }
+  }
+
+  @override
+  void dispose() {
+    _generation++;
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   @override
@@ -57,7 +93,9 @@ class _QiblaScreenState extends State<QiblaScreen> {
                 padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
                 child: _loading
                     ? const Center(child: CircularProgressIndicator())
-                    : (_granted ? _content(l10n) : _permission(l10n)),
+                    : (_granted && !_locationFailed
+                          ? _content(l10n)
+                          : _permission(l10n)),
               ),
             ),
           ],
@@ -81,8 +119,14 @@ class _QiblaScreenState extends State<QiblaScreen> {
         ),
         const Spacer(),
         StreamBuilder<QiblaReading>(
-          stream: _service.readings(),
+          stream: _readings,
           builder: (context, snapshot) {
+            if (snapshot.hasError || !_service.hasCompass) {
+              return Text(
+                l10n.qiblaCompassUnavailable,
+                textAlign: TextAlign.center,
+              );
+            }
             final reading = snapshot.data;
             return RepaintBoundary(
               child: CompassDial(
@@ -131,9 +175,13 @@ class _QiblaScreenState extends State<QiblaScreen> {
           ),
           const SizedBox(height: 20),
           Text(
-            l10n.qiblaPermission,
+            _locationFailed ? l10n.qiblaLocationFailed : l10n.qiblaPermission,
             textAlign: TextAlign.center,
             style: TextStyle(color: BrandColors.textSecondary),
+          ),
+          TextButton(
+            onPressed: openAppSettings,
+            child: Text(l10n.openSystemSettings),
           ),
           const SizedBox(height: 24),
           FilledButton(
@@ -145,7 +193,7 @@ class _QiblaScreenState extends State<QiblaScreen> {
               setState(() => _loading = true);
               _prepare();
             },
-            child: Text(l10n.grantAccess),
+            child: Text(_locationFailed ? l10n.retryAction : l10n.grantAccess),
           ),
         ],
       ),

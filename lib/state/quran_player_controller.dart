@@ -28,9 +28,9 @@ class QuranPlayerController extends ChangeNotifier {
   static const String _reciterKey = 'quran_reciter_id';
   static const String _moshafKey = 'quran_moshaf_id';
 
-  final Future<QuranAudioHandler> Function() _handlerFactory;
-  QuranAudioHandler? _handler;
-  Future<QuranAudioHandler>? _initializingHandler;
+  final Future<QuranPlaybackHandler> Function() _handlerFactory;
+  QuranPlaybackHandler? _handler;
+  Future<QuranPlaybackHandler>? _initializingHandler;
   final ValueNotifier<PlaybackProgress> progress =
       ValueNotifier<PlaybackProgress>(const PlaybackProgress());
 
@@ -41,7 +41,12 @@ class QuranPlayerController extends ChangeNotifier {
   bool _isPlaying = false;
   bool _isLoading = false;
   bool _autoplayNext = true;
+  bool _disposed = false;
+  bool _hasError = false;
+  int _generation = 0;
+  bool get hasError => _hasError;
   String? _radioName;
+  String? _radioUrl;
 
   int? _restoredReciterId;
   int? _restoredMoshafId;
@@ -71,35 +76,43 @@ class QuranPlayerController extends ChangeNotifier {
   int? get restoredReciterId => _restoredReciterId;
   int? get restoredMoshafId => _restoredMoshafId;
 
-  Future<QuranAudioHandler> _ensureHandler() async {
-    final existing = _handler;
-    if (existing != null) return existing;
-    final pending = _initializingHandler ??= _handlerFactory();
-    late final QuranAudioHandler handler;
-    try {
-      handler = await pending;
-    } catch (_) {
+  Future<QuranPlaybackHandler> _ensureHandler() {
+    if (_disposed) return Future.error(StateError('Player disposed'));
+    if (_handler != null) return Future.value(_handler!);
+    return _initializingHandler ??= _createHandler().catchError((Object e) {
       _initializingHandler = null;
-      rethrow;
+      throw e;
+    });
+  }
+
+  Future<QuranPlaybackHandler> _createHandler() async {
+    final handler = await _handlerFactory();
+    if (_disposed) {
+      await handler.disposePlayer();
+      throw StateError('Player disposed');
     }
     _handler = handler;
     handler.setOnComplete(_onComplete);
     handler.setOnError(_onError);
     handler.setSkipHandlers(onNext: next, onPrevious: previous);
     _posSub = handler.positionStream.listen((value) {
-      progress.value = PlaybackProgress(
-        position: value,
-        duration: progress.value.duration,
-      );
+      if (!_disposed) {
+        progress.value = PlaybackProgress(
+          position: value,
+          duration: progress.value.duration,
+        );
+      }
     });
     _durSub = handler.durationStream.listen((value) {
-      progress.value = PlaybackProgress(
-        position: progress.value.position,
-        duration: value ?? Duration.zero,
-      );
+      if (!_disposed) {
+        progress.value = PlaybackProgress(
+          position: progress.value.position,
+          duration: value ?? Duration.zero,
+        );
+      }
     });
     _playingSub = handler.playingStream.listen((playing) {
-      if (playing != _isPlaying) {
+      if (!_disposed && playing != _isPlaying) {
         _isPlaying = playing;
         notifyListeners();
       }
@@ -114,6 +127,9 @@ class QuranPlayerController extends ChangeNotifier {
   }
 
   void setReciter(Reciter reciter, Moshaf moshaf, List<MoshafSurah> suwar) {
+    if (_moshaf?.id != moshaf.id || _reciter?.id != reciter.id) {
+      unawaited(stop());
+    }
     _reciter = reciter;
     _moshaf = moshaf;
     _playlist = suwar.where((surah) => moshaf.hasSurah(surah.id)).toList();
@@ -129,37 +145,54 @@ class QuranPlayerController extends ChangeNotifier {
   }
 
   Future<void> playRadio(String name, String url) async {
-    debugPrint('[QuranPlayer] playRadio start: name=$name url=$url');
+    final generation = ++_generation;
     _isLoading = true;
+    _hasError = false;
     _radioName = name;
+    _radioUrl = url;
     _index = -1;
     progress.value = const PlaybackProgress();
     notifyListeners();
     try {
       final handler = await _ensureHandler();
+      if (_disposed || generation != _generation) return;
       await handler.loadUrl(
         url,
         MediaItem(id: url, title: name, album: 'Quran Radio'),
       );
-      debugPrint('[QuranPlayer] playRadio loadUrl succeeded: name=$name');
-    } catch (e, st) {
-      debugPrint('[QuranPlayer] playRadio FAILED: name=$name url=$url error=$e');
-      debugPrint('[QuranPlayer] stack: $st');
-      _radioName = null;
-      _isPlaying = false;
+    } catch (_) {
+      if (!_disposed && generation == _generation) {
+        _hasError = true;
+        _isPlaying = false;
+      }
     } finally {
-      _isLoading = false;
+      if (!_disposed && generation == _generation) {
+        _isLoading = false;
+        notifyListeners();
+      }
     }
-    notifyListeners();
   }
 
   Future<void> togglePlayPause() async {
-    if (!hasTrack) return;
-    final handler = await _ensureHandler();
-    if (_isPlaying) {
-      await handler.pause();
-    } else {
-      await handler.play();
+    if (!hasTrack || _isLoading) return;
+    if (_hasError) {
+      if (isRadio && _radioUrl != null) {
+        await playRadio(_radioName!, _radioUrl!);
+      } else if (hasSurahTrack) {
+        await _loadAndPlay(_index);
+      }
+      return;
+    }
+    try {
+      final handler = await _ensureHandler();
+      if (_disposed) return;
+      if (_isPlaying) {
+        await handler.pause();
+      } else {
+        unawaited(handler.play().catchError((Object _) => _onError()));
+      }
+    } catch (_) {
+      _onError();
     }
   }
 
@@ -175,16 +208,31 @@ class QuranPlayerController extends ChangeNotifier {
 
   Future<void> seek(Duration to) async {
     if (!hasTrack) return;
-    await (await _ensureHandler()).seek(to);
+    try {
+      await (await _ensureHandler()).seek(to);
+    } catch (_) {
+      _onError();
+    }
   }
 
   Future<void> stop() async {
-    await _handler?.stop();
+    _generation++;
     _index = -1;
     _radioName = null;
     _isPlaying = false;
-    progress.value = const PlaybackProgress();
-    notifyListeners();
+    _isLoading = false;
+    if (!_disposed) {
+      progress.value = const PlaybackProgress();
+      notifyListeners();
+    }
+    try {
+      await _handler?.stop();
+    } catch (_) {
+      if (!_disposed) {
+        _hasError = true;
+        notifyListeners();
+      }
+    }
   }
 
   void setAutoplayNext(bool value) {
@@ -195,15 +243,20 @@ class QuranPlayerController extends ChangeNotifier {
   Future<void> _loadAndPlay(int index) async {
     final moshaf = _moshaf;
     final reciter = _reciter;
-    if (moshaf == null || index < 0 || index >= _playlist.length) return;
+    if (_disposed || moshaf == null || index < 0 || index >= _playlist.length) {
+      return;
+    }
+    final surah = _playlist[index];
+    final generation = ++_generation;
     _isLoading = true;
+    _hasError = false;
     _index = index;
     _radioName = null;
     progress.value = const PlaybackProgress();
     notifyListeners();
     try {
       final handler = await _ensureHandler();
-      final surah = _playlist[index];
+      if (_disposed || generation != _generation) return;
       await handler.loadUrl(
         moshaf.audioUrlFor(surah.id),
         MediaItem(
@@ -214,15 +267,20 @@ class QuranPlayerController extends ChangeNotifier {
         ),
       );
     } catch (_) {
-      _index = -1;
-      _isPlaying = false;
+      if (!_disposed && generation == _generation) {
+        _hasError = true;
+        _isPlaying = false;
+      }
     } finally {
-      _isLoading = false;
+      if (!_disposed && generation == _generation) {
+        _isLoading = false;
+        notifyListeners();
+      }
     }
-    notifyListeners();
   }
 
   void _onComplete() {
+    if (_disposed || _isLoading) return;
     if (_autoplayNext && hasNext) {
       unawaited(_loadAndPlay(_index + 1));
     } else {
@@ -231,7 +289,11 @@ class QuranPlayerController extends ChangeNotifier {
   }
 
   void _onError() {
-    unawaited(stop());
+    if (_disposed) return;
+    _hasError = true;
+    _isPlaying = false;
+    _isLoading = false;
+    notifyListeners();
   }
 
   Future<void> _persistSelection() async {
@@ -245,6 +307,8 @@ class QuranPlayerController extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
+    _generation++;
     _posSub?.cancel();
     _durSub?.cancel();
     _playingSub?.cancel();

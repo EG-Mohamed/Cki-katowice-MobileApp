@@ -42,7 +42,7 @@ class NotificationService implements NotificationGateway {
   static const int testNotificationId = 9999;
 
   final FlutterLocalNotificationsPlugin _plugin;
-  bool _ready = false;
+  Future<void>? _initializing;
 
   @override
   bool get isAndroid =>
@@ -77,8 +77,13 @@ class NotificationService implements NotificationGateway {
   );
 
   @override
-  Future<void> init() async {
-    if (_ready) return;
+  Future<void> init() =>
+      _initializing ??= _initialize().catchError((Object error) {
+        _initializing = null;
+        throw error;
+      });
+
+  Future<void> _initialize() async {
     prayer_time.initPrayerTimeZones();
     const initialization = InitializationSettings(
       android: AndroidInitializationSettings('ic_stat_notification'),
@@ -90,7 +95,6 @@ class NotificationService implements NotificationGateway {
     );
     await _plugin.initialize(settings: initialization);
     await _createChannel();
-    _ready = true;
   }
 
   Future<void> _createChannel() async {
@@ -121,7 +125,16 @@ class NotificationService implements NotificationGateway {
   @override
   Future<bool> notificationsEnabled() async {
     await init();
-    if (isAndroid) return await _android?.areNotificationsEnabled() ?? true;
+    if (isAndroid) {
+      if (!(await _android?.areNotificationsEnabled() ?? false)) return false;
+      final channels = await _android?.getNotificationChannels();
+      for (final channel in channels ?? <AndroidNotificationChannel>[]) {
+        if (channel.id == channelId && channel.importance == Importance.none) {
+          return false;
+        }
+      }
+      return true;
+    }
     if (isIOS) return (await _ios?.checkPermissions())?.isEnabled ?? false;
     return true;
   }
@@ -138,7 +151,7 @@ class NotificationService implements NotificationGateway {
           false;
     }
     if (isAndroid) {
-      return await _android?.requestNotificationsPermission() ?? true;
+      return await _android?.requestNotificationsPermission() ?? false;
     }
     return true;
   }
@@ -147,7 +160,7 @@ class NotificationService implements NotificationGateway {
   Future<bool> canScheduleExactAlarms() async {
     await init();
     if (!isAndroid) return true;
-    return await _android?.canScheduleExactNotifications() ?? true;
+    return await _android?.canScheduleExactNotifications() ?? false;
   }
 
   @override
@@ -176,7 +189,18 @@ class NotificationService implements NotificationGateway {
     await _plugin.zonedSchedule(
       id: id,
       scheduledDate: when,
-      notificationDetails: _details,
+      notificationDetails: payload.startsWith('coverage:')
+          ? const NotificationDetails(
+              android: AndroidNotificationDetails(
+                'schedule_status',
+                'Prayer schedule status',
+              ),
+              iOS: DarwinNotificationDetails(
+                presentAlert: true,
+                presentSound: false,
+              ),
+            )
+          : _details,
       androidScheduleMode: exact
           ? AndroidScheduleMode.exactAllowWhileIdle
           : AndroidScheduleMode.inexactAllowWhileIdle,

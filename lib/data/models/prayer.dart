@@ -24,7 +24,8 @@ class DailyPrayers {
   const DailyPrayers({required this.date, required this.slots});
 
   factory DailyPrayers.fromJson(Map<String, dynamic> json) {
-    final date = DateTime.parse(json['date'] as String);
+    final rawDate = json['date'] as String;
+    final date = DateTime.parse(rawDate.substring(0, 10));
     final jummah = json['jummah'];
     final isFriday = date.weekday == DateTime.friday;
     return DailyPrayers(
@@ -40,7 +41,9 @@ class DailyPrayers {
           time: _timeFromValue(json['sunrise']),
           isNotifiable: false,
         ),
-        if (isFriday && jummah != null)
+        if (isFriday &&
+            jummah is Map<String, dynamic> &&
+            jummah['adhan'] != null)
           PrayerSlot(
             name: PrayerName.jumuah,
             time: _timeFromNested(jummah),
@@ -74,8 +77,9 @@ class DailyPrayers {
   final DateTime date;
   final List<PrayerSlot> slots;
 
-  List<PrayerSlot> get notifiable =>
-      slots.where((s) => s.name != PrayerName.sunrise).toList();
+  List<PrayerSlot> get notifiable => slots
+      .where((s) => s.isNotifiable && s.name != PrayerName.sunrise)
+      .toList();
 
   static TimeOfDay _timeFromNested(Object? value, [String key = 'adhan']) {
     final map = value as Map<String, dynamic>;
@@ -91,6 +95,12 @@ class DailyPrayers {
 
   static TimeOfDay _timeFromValue(Object? value) {
     final parts = (value as String).split(':');
-    return TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+    if (parts.length < 2) throw const FormatException('Invalid prayer time');
+    final hour = int.parse(parts[0]);
+    final minute = int.parse(parts[1]);
+    if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+      throw const FormatException('Invalid prayer time');
+    }
+    return TimeOfDay(hour: hour, minute: minute);
   }
 }

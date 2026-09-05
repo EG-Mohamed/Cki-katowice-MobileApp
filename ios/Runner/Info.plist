@@ -74,6 +74,10 @@
 			<string>tel</string>
 			<string>mailto</string>
 		</array>
+		<key>BGTaskSchedulerPermittedIdentifiers</key>
+		<array>
+			<string>pl.ckikatowice.app.prayerRefresh</string>
+		</array>
 		<key>UIBackgroundModes</key>
 		<array>
 			<string>audio</string>

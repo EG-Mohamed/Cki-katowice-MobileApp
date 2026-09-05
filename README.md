@@ -30,7 +30,7 @@ Built with Flutter for Android and iOS. Fully localized in **English, Polish, an
 - **Audio**: `just_audio` + `audio_service` (background playback & media notification) + `audio_session`
 - **Networking**: `http`
 - **Localization**: `flutter_localizations` + gen‑l10n (ARB files)
-- **Other**: `shared_preferences`, `flutter_local_notifications`, `timezone`, `flutter_compass`, `geolocator`, `permission_handler`, `google_fonts`, `url_launcher`, `intl`
+- **Other**: `shared_preferences`, `flutter_local_notifications`, `timezone`, `flutter_compass`, `geolocator`, `permission_handler`, `workmanager`, `sqflite`, `url_launcher`, `intl`
 
 ---
 
@@ -135,3 +135,7 @@ Release signing reads `android/key.properties` (git‑ignored). If it's absent, 
 ---
 
 *Built with ♥ by [Mohamed Said](https://msaied.com/).*
+
+## Notification reliability and testing
+
+Prayer reminders now use OS scheduling with Workmanager replenishment, offline caching, and notification diagnostics in Settings. See [the architecture, build instructions and physical-device checklist](docs/notification-validation.md). iOS 14 or later is required.

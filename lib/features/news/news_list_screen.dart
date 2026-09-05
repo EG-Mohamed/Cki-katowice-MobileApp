@@ -35,6 +35,8 @@ class _NewsListScreenState extends State<NewsListScreen> {
   bool _isLoadingMore = false;
   bool _isLoadingCategories = false;
   bool _hasError = false;
+  int _queryGeneration = 0;
+  int _categoryGeneration = 0;
 
   @override
   void initState() {
@@ -47,6 +49,7 @@ class _NewsListScreenState extends State<NewsListScreen> {
     super.didChangeDependencies();
     final locale = Localizations.localeOf(context).languageCode;
     if (_locale != locale) {
+      _searchDebounce?.cancel();
       _locale = locale;
       _loadCategories();
       _loadFirstPage();
@@ -54,6 +57,7 @@ class _NewsListScreenState extends State<NewsListScreen> {
   }
 
   Future<void> _loadCategories() async {
+    final generation = ++_categoryGeneration;
     setState(() {
       _categories.clear();
       _categoryId = null;
@@ -61,23 +65,26 @@ class _NewsListScreenState extends State<NewsListScreen> {
     });
     try {
       final categories = await context.read<NewsService>().categories();
-      if (!mounted) return;
+      if (!mounted || generation != _categoryGeneration) return;
       setState(() {
         _categories.addAll(categories);
         _isLoadingCategories = false;
       });
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted || generation != _categoryGeneration) return;
       setState(() => _isLoadingCategories = false);
     }
   }
 
   Future<void> _loadFirstPage() async {
+    if (!mounted) return;
+    _queryGeneration++;
     setState(() {
       _items.clear();
       _page = 1;
       _lastPage = 1;
       _isLoading = true;
+      _isLoadingMore = false;
       _hasError = false;
     });
     await _loadPage(1, replace: true);
@@ -89,19 +96,21 @@ class _NewsListScreenState extends State<NewsListScreen> {
   }
 
   Future<void> _loadMore() async {
+    if (!mounted || (_searchDebounce?.isActive ?? false)) return;
     if (_isLoadingMore || _isLoading || _page >= _lastPage) return;
     setState(() => _isLoadingMore = true);
     await _loadPage(_page + 1);
   }
 
   Future<void> _loadPage(int page, {bool replace = false}) async {
+    final generation = _queryGeneration;
     try {
       final result = await context.read<NewsService>().page(
         page: page,
         search: _searchController.text,
         categoryId: _categoryId,
       );
-      if (!mounted) return;
+      if (!mounted || generation != _queryGeneration) return;
       setState(() {
         if (replace) _items.clear();
         _items.addAll(result.items);
@@ -111,7 +120,7 @@ class _NewsListScreenState extends State<NewsListScreen> {
         _isLoadingMore = false;
       });
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted || generation != _queryGeneration) return;
       setState(() {
         _hasError = true;
         _isLoading = false;
@@ -129,12 +138,14 @@ class _NewsListScreenState extends State<NewsListScreen> {
 
   void _onSearchChanged(String value) {
     setState(() {});
+    _queryGeneration++;
     _searchDebounce?.cancel();
     _searchDebounce = Timer(const Duration(milliseconds: 450), _loadFirstPage);
   }
 
   void _selectCategory(int? id) {
     if (_categoryId == id) return;
+    _searchDebounce?.cancel();
     setState(() => _categoryId = id);
     _loadFirstPage();
   }

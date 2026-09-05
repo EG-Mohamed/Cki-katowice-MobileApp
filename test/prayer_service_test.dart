@@ -5,8 +5,11 @@ import 'package:ckikatowice/data/services/prayer_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  setUp(() => SharedPreferences.setMockInitialValues({}));
   test('range requests and parses the prayer-times endpoint', () async {
     late Uri requested;
     final client = MockClient((request) async {
@@ -43,4 +46,120 @@ void main() {
     expect(result.single.date, DateTime(2026, 7, 21));
     expect(result.single.notifiable.length, 5);
   });
+
+  test(
+    'concurrent range requests share one network request and complete',
+    () async {
+      var calls = 0;
+      final service = ApiPrayerService(
+        ApiClient(
+          client: MockClient((_) async {
+            calls++;
+            return http.Response(
+              jsonEncode({
+                'data': [_raw('2026-09-05')],
+              }),
+              200,
+            );
+          }),
+        ),
+      );
+      final result = await Future.wait([
+        service.range(from: DateTime(2026, 9, 5), to: DateTime(2026, 9, 5)),
+        service.range(from: DateTime(2026, 9, 5), to: DateTime(2026, 9, 5)),
+      ]);
+      expect(calls, 1);
+      expect(result.every((days) => days.length == 1), true);
+    },
+  );
+
+  test(
+    'new service instance reads offline cache after single-day fetch',
+    () async {
+      final date = DateTime.now();
+      final dateString =
+          '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+      final first = ApiPrayerService(
+        ApiClient(
+          client: MockClient(
+            (_) async =>
+                http.Response(jsonEncode({'data': _raw(dateString)}), 200),
+          ),
+        ),
+      );
+      await first.forDate(date);
+      final offline = ApiPrayerService(
+        ApiClient(
+          client: MockClient(
+            (_) async => throw const FormatException('offline'),
+          ),
+        ),
+      );
+      final restored = await offline.forDate(date);
+      expect(restored.slots.first.time.hour, 5);
+    },
+  );
+
+  test('Friday with null Jumuah time falls back to Dhuhr', () async {
+    final service = ApiPrayerService(
+      ApiClient(
+        client: MockClient(
+          (_) async => http.Response(
+            jsonEncode({
+              'data': [
+                {
+                  ..._raw('2026-09-11'),
+                  'jummah': {'adhan': null, 'iqamah': null},
+                },
+              ],
+            }),
+            200,
+          ),
+        ),
+      ),
+    );
+    final result = await service.range(
+      from: DateTime(2026, 9, 11),
+      to: DateTime(2026, 9, 11),
+    );
+    expect(result.single.notifiable.length, 5);
+    expect(result.single.notifiable[1].name.name, 'dhuhr');
+  });
+
+  test('malformed date does not discard healthy range entries', () async {
+    final service = ApiPrayerService(
+      ApiClient(
+        client: MockClient(
+          (_) async => http.Response(
+            jsonEncode({
+              'data': [
+                _raw('2026-09-05'),
+                {
+                  ..._raw('2026-09-06'),
+                  'fajr': {'adhan': '29:90'},
+                },
+              ],
+            }),
+            200,
+          ),
+        ),
+      ),
+    );
+    final result = await service.range(
+      from: DateTime(2026, 9, 5),
+      to: DateTime(2026, 9, 6),
+    );
+    expect(result.length, 1);
+    expect(result.single.date, DateTime(2026, 9, 5));
+  });
 }
+
+Map<String, Object?> _raw(String date) => {
+  'date': date,
+  'fajr': {'adhan': '05:00'},
+  'sunrise': '06:30',
+  'dhuhr': {'adhan': '12:00'},
+  'asr': {'adhan': '16:00'},
+  'maghrib': {'adhan': '19:00'},
+  'isha': {'adhan': '21:00'},
+};

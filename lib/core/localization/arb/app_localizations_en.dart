@@ -360,4 +360,58 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get openSystemSettings => 'Open system settings';
+
+  @override
+  String get notificationCoverageTitle => 'Prayer reminders need a refresh';
+
+  @override
+  String get notificationCoverageBody =>
+      'Open CKI Katowice to refresh upcoming prayer reminders.';
+
+  @override
+  String get refreshReminders => 'Refresh reminders';
+
+  @override
+  String get testLockedScreen => 'Test with screen locked';
+
+  @override
+  String get notificationTestScheduled =>
+      'Lock your screen. A test notification is scheduled for 15 seconds from now.';
+
+  @override
+  String get notificationTestFailed =>
+      'Could not schedule the test. Check notification permissions and try again.';
+
+  @override
+  String notificationNextAt(String time) {
+    return 'Next reminder (Katowice): $time';
+  }
+
+  @override
+  String notificationLastRefresh(String time) {
+    return 'Last refresh: $time';
+  }
+
+  @override
+  String get notificationsAllOff =>
+      'Notifications are turned off for all prayers.';
+
+  @override
+  String get notificationReliabilityHelp =>
+      'Prayer reminders are scheduled on your phone. Background refresh extends coverage when the system allows it. Check notification and battery settings if alerts are delayed.';
+
+  @override
+  String get qiblaLocationFailed =>
+      'Location could not be obtained. Enable location services and try again.';
+
+  @override
+  String get qiblaCompassUnavailable =>
+      'This device has no available compass reading.';
+
+  @override
+  String get retryAction => 'Try again';
+
+  @override
+  String get playbackFailed =>
+      'Playback failed. Check your connection and try again.';
 }

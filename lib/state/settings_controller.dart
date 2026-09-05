@@ -10,19 +10,32 @@ class SettingsController extends ChangeNotifier {
 
   SiteSettings? _settings;
   bool _isLoading = false;
+  int _generation = 0;
+  bool _disposed = false;
 
   SiteSettings? get settings => _settings;
   bool get isLoading => _isLoading;
 
   Future<void> load() async {
+    final generation = ++_generation;
     _isLoading = true;
     notifyListeners();
     try {
-      _settings = await _service.fetch();
+      final result = await _service.fetch();
+      if (_disposed || generation != _generation) return;
+      _settings = result;
     } catch (_) {
+      if (_disposed || generation != _generation) return;
     } finally {
-      _isLoading = false;
+      if (!_disposed && generation == _generation) _isLoading = false;
     }
-    notifyListeners();
+    if (!_disposed) notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _generation++;
+    super.dispose();
   }
 }

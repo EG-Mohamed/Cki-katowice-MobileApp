@@ -109,5 +109,33 @@
   "notificationScheduleFailed": "تعذر تحديث تذكيرات الصلاة. تم الاحتفاظ بالتذكيرات الحالية.",
   "notificationDelayedHint": "التذكيرات مفعلة، لكن قد يؤخرها أندرويد حتى يتم منح إذن المنبهات الدقيقة.",
   "testNotificationScheduled": "تمت جدولة الاختبار. اقفل الشاشة الآن؛ سيصل خلال نحو 15 ثانية.",
-  "openSystemSettings": "فتح إعدادات النظام"
+  "openSystemSettings": "فتح إعدادات النظام",
+  "notificationCoverageTitle": "تحتاج تنبيهات الصلاة إلى تحديث",
+  "notificationCoverageBody": "افتح تطبيق CKI Katowice لتحديث تنبيهات الصلوات القادمة.",
+  "refreshReminders": "تحديث التنبيهات",
+  "testLockedScreen": "اختبار مع قفل الشاشة",
+  "notificationTestScheduled": "اقفل الشاشة. تم جدولة إشعار تجريبي بعد 15 ثانية.",
+  "notificationTestFailed": "تعذرت جدولة الاختبار. تحقق من أذونات الإشعارات وحاول مجدداً.",
+  "notificationNextAt": "التنبيه القادم (كاتوفيتسه): {time}",
+  "notificationLastRefresh": "آخر تحديث: {time}",
+  "notificationsAllOff": "تنبيهات جميع الصلوات متوقفة.",
+  "notificationReliabilityHelp": "تتم جدولة التنبيهات على هاتفك. يمدد التحديث في الخلفية الجدول عندما يسمح النظام بذلك. تحقق من إعدادات الإشعارات والبطارية إذا تأخرت التنبيهات.",
+  "qiblaLocationFailed": "تعذر تحديد الموقع. فعّل خدمات الموقع وحاول مجدداً.",
+  "qiblaCompassUnavailable": "قراءة البوصلة غير متاحة على هذا الجهاز.",
+  "retryAction": "حاول مجدداً",
+  "playbackFailed": "تعذر التشغيل. تحقق من الاتصال وحاول مجدداً.",
+  "@notificationNextAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "@notificationLastRefresh": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  }
 }

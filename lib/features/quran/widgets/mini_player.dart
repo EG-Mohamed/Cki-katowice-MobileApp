@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/localization/arb/app_localizations.dart';
 import '../../../core/theme/brand_colors.dart';
 import '../../../data/models/mp3quran.dart';
 import '../../../shared/shell_scope.dart';
@@ -80,6 +81,11 @@ class MiniPlayer extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              if (controller.hasError)
+                Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Text(AppLocalizations.of(context).playbackFailed),
+                ),
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(18),

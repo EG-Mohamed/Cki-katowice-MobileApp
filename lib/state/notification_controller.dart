@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../data/models/prayer.dart';
 
 class NotificationController extends ChangeNotifier {
-  static const String _key = 'enabled_prayers';
+  static const String storageKey = 'enabled_prayers';
   static const List<PrayerName> notifiable = [
     PrayerName.fajr,
     PrayerName.dhuhr,
@@ -16,13 +16,14 @@ class NotificationController extends ChangeNotifier {
 
   Set<PrayerName> _enabled = {...notifiable};
 
-  Set<PrayerName> get enabled => _enabled;
+  Set<PrayerName> get enabled => Set.unmodifiable(_enabled);
   bool get allEnabled => _enabled.length == notifiable.length;
   bool isEnabled(PrayerName name) => _enabled.contains(name);
 
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
-    final stored = prefs.getStringList(_key);
+    await prefs.reload();
+    final stored = prefs.getStringList(storageKey);
     if (stored == null) {
       _enabled = {...notifiable};
     } else {
@@ -32,17 +33,11 @@ class NotificationController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> toggle(PrayerName name) async {
-    if (_enabled.contains(name)) {
-      _enabled.remove(name);
-    } else {
-      _enabled.add(name);
-    }
-    await _persist();
-    notifyListeners();
-  }
+  Future<void> toggle(PrayerName name) => setEnabled(name, !isEnabled(name));
 
   Future<void> setEnabled(PrayerName name, bool value) async {
+    if (!notifiable.contains(name)) return;
+    await load();
     if (value) {
       _enabled.add(name);
     } else {
@@ -60,6 +55,6 @@ class NotificationController extends ChangeNotifier {
 
   Future<void> _persist() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(_key, _enabled.map((p) => p.name).toList());
+    await prefs.setStringList(storageKey, _enabled.map((p) => p.name).toList());
   }
 }

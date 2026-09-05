@@ -36,8 +36,8 @@ class LocaleController extends ChangeNotifier {
     if (_locale == locale) return;
     _locale = locale;
     _apiClient.locale = locale.languageCode;
-    notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_key, locale.languageCode);
+    notifyListeners();
   }
 }

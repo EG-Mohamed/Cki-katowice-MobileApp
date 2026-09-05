@@ -1,29 +1,36 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 import '../core/utils/prayer_time.dart';
 import '../data/models/prayer.dart';
 import '../data/services/prayer_service.dart';
 
 class PrayerController extends ChangeNotifier with WidgetsBindingObserver {
-  PrayerController(this._service) {
+  PrayerController(this._service, {DateTime Function()? now})
+    : _now = now ?? DateTime.now {
+    _selectedDate = _today;
     WidgetsBinding.instance.addObserver(this);
   }
-
   final PrayerService _service;
-
+  final DateTime Function() _now;
   DailyPrayers? _day;
+  DailyPrayers? _tomorrow;
   Timer? _ticker;
-  PrayerName? _lastNextPrayer;
-  final Set<String> _firedKeys = <String>{};
-  void Function(DailyPrayers day, PrayerSlot slot)? onPrayerDue;
-  final ValueNotifier<Duration> remainingListenable = ValueNotifier<Duration>(
-    Duration.zero,
-  );
+  int _generation = 0;
+  bool _disposed = false;
+  bool _followToday = true;
   bool _hasError = false;
   bool _isLoading = false;
-  DateTime _selectedDate = prayerToday();
+  late DateTime _selectedDate;
+  final remainingListenable = ValueNotifier<Duration>(Duration.zero);
+
+  tz.TZDateTime get _instant => tz.TZDateTime.from(_now(), prayerLocation);
+  DateTime get _today {
+    final now = _instant;
+    return DateTime(now.year, now.month, now.day);
+  }
 
   DailyPrayers? get day => _day;
   Duration get remaining => remainingListenable.value;
@@ -31,50 +38,77 @@ class PrayerController extends ChangeNotifier with WidgetsBindingObserver {
   bool get hasError => _hasError;
   bool get isLoading => _isLoading;
   DateTime get selectedDate => _selectedDate;
-  bool get isSelectedDateToday {
-    final now = prayerToday();
-    return _selectedDate.year == now.year &&
-        _selectedDate.month == now.month &&
-        _selectedDate.day == now.day;
-  }
+  bool get isSelectedDateToday => _selectedDate == _today;
 
   Future<void> load({DateTime? date}) async {
-    final targetDate = date ?? _selectedDate;
-    _selectedDate = DateTime(targetDate.year, targetDate.month, targetDate.day);
-    _isLoading = true;
+    if (_disposed) return;
+    final generation = ++_generation;
+    final target = date ?? (_followToday ? _today : _selectedDate);
+    _selectedDate = DateTime(target.year, target.month, target.day);
+    _followToday = _selectedDate == _today;
+    _ticker?.cancel();
     _day = null;
+    _tomorrow = null;
+    _isLoading = true;
+    _hasError = false;
+    remainingListenable.value = Duration.zero;
     notifyListeners();
     try {
-      _day = await _service.forDate(_selectedDate);
-      _hasError = false;
-      _lastNextPrayer = nextPrayer?.name;
-      _startTicker();
-      _recompute();
-    } catch (_) {
-      _hasError = true;
-    } finally {
+      final loaded = await _service.forDate(_selectedDate);
+      if (_disposed || generation != _generation) return;
+      _day = loaded;
       _isLoading = false;
+      _recompute();
+      _startTicker();
+      notifyListeners();
+      if (_followToday) unawaited(_loadTomorrow(loaded.date, generation));
+    } catch (_) {
+      if (_disposed || generation != _generation) return;
+      _hasError = true;
+      _isLoading = false;
+      notifyListeners();
     }
-    notifyListeners();
   }
 
-  PrayerSlot? get nextPrayer {
-    final day = _day;
-    if (day == null) return null;
-    final now = prayerNow();
-    for (final slot in day.notifiable) {
-      if (prayerInstant(day.date, slot.time).isAfter(now)) return slot;
+  Future<void> _loadTomorrow(DateTime date, int generation) async {
+    try {
+      final tomorrow = await _service.forDate(
+        DateTime(date.year, date.month, date.day + 1),
+      );
+      if (_disposed || generation != _generation) return;
+      _tomorrow = tomorrow;
+      _recompute();
+      notifyListeners();
+    } catch (_) {
+      /* Today's timetable remains usable offline. */
     }
-    return day.notifiable.first;
   }
 
+  ({PrayerSlot slot, DateTime at})? get _next {
+    final now = _instant;
+    final candidates = <({PrayerSlot slot, DateTime at})>[];
+    for (final day in [_day, if (isSelectedDateToday) _tomorrow]) {
+      if (day == null) continue;
+      for (final slot in day.notifiable) {
+        final at = prayerInstant(day.date, slot.time);
+        if (at.isAfter(now)) candidates.add((slot: slot, at: at));
+      }
+    }
+    candidates.sort((a, b) => a.at.compareTo(b.at));
+    return candidates.isEmpty ? null : candidates.first;
+  }
+
+  PrayerSlot? get nextPrayer => _next?.slot;
+  DateTime? get nextPrayerAt => _next?.at;
   PrayerSlot? get currentPrayer {
     final day = _day;
-    if (day == null) return null;
-    final now = prayerNow();
+    if (day == null || !isSelectedDateToday) return null;
     PrayerSlot? current;
+    DateTime? latest;
     for (final slot in day.notifiable) {
-      if (!prayerInstant(day.date, slot.time).isAfter(now)) {
+      final at = prayerInstant(day.date, slot.time);
+      if (!at.isAfter(_instant) && (latest == null || at.isAfter(latest))) {
+        latest = at;
         current = slot;
       }
     }
@@ -83,74 +117,54 @@ class PrayerController extends ChangeNotifier with WidgetsBindingObserver {
 
   void _startTicker() {
     _ticker?.cancel();
+    final state = WidgetsBinding.instance.lifecycleState;
+    if (!_followToday ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.detached) {
+      return;
+    }
+    var lastNext = nextPrayerAt;
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-      final next = nextPrayer?.name;
+      if (_followToday && _selectedDate != _today) {
+        unawaited(load(date: _today));
+        return;
+      }
       _recompute();
-      if (next != _lastNextPrayer) {
-        _lastNextPrayer = next;
+      final next = nextPrayerAt;
+      if (next != lastNext) {
+        lastNext = next;
         notifyListeners();
       }
     });
   }
 
   void _recompute() {
-    final day = _day;
-    final next = nextPrayer;
-    if (day == null || next == null) {
-      remainingListenable.value = Duration.zero;
-      return;
-    }
-    var target = prayerInstant(day.date, next.time);
-    final now = prayerNow();
-    if (target.isBefore(now)) {
-      target = target.add(const Duration(days: 1));
-    }
-    remainingListenable.value = target.difference(now);
-    _fireDuePrayers(day, now);
+    final at = nextPrayerAt;
+    final difference = at?.difference(_instant) ?? Duration.zero;
+    remainingListenable.value = difference.isNegative
+        ? Duration.zero
+        : difference;
   }
-
-  void _fireDuePrayers(DailyPrayers day, DateTime now) {
-    final callback = onPrayerDue;
-    if (callback == null || !isSelectedDateToday) return;
-    for (final slot in day.notifiable) {
-      final at = prayerInstant(day.date, slot.time);
-      if (at.isAfter(now)) continue;
-      if (now.difference(at) > const Duration(minutes: 1)) continue;
-      final key = _firedKey(day.date, slot.name);
-      if (!_firedKeys.add(key)) continue;
-      callback(day, slot);
-    }
-  }
-
-  String _firedKey(DateTime date, PrayerName name) =>
-      '${date.year}-${date.month}-${date.day}-${name.name}';
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      final now = prayerToday();
-      final selected = _selectedDate;
-      final dateChanged =
-          selected.year != now.year ||
-          selected.month != now.month ||
-          selected.day != now.day;
-      if (dateChanged) {
-        _firedKeys.clear();
-        unawaited(load(date: now));
-      } else if (_day != null) {
+      if (_followToday && _selectedDate != _today) {
+        unawaited(load(date: _today));
+      } else {
         _recompute();
         _startTicker();
       }
-    } else if (state == AppLifecycleState.inactive ||
-        state == AppLifecycleState.paused ||
-        state == AppLifecycleState.detached) {
+    } else {
       _ticker?.cancel();
-      _ticker = null;
     }
   }
 
   @override
   void dispose() {
+    _disposed = true;
+    _generation++;
     WidgetsBinding.instance.removeObserver(this);
     _ticker?.cancel();
     remainingListenable.dispose();

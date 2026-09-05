@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/utils/prayer_time.dart';
 import '../api/api_client.dart';
 import '../models/prayer.dart';
 
@@ -16,142 +17,200 @@ abstract class PrayerService {
 
 class ApiPrayerService implements PrayerService {
   ApiPrayerService(this._api);
-
-  static const String _storeKey = 'prayer_times_cache';
-
   final ApiClient _api;
-  DateTime? _rangeFetchedAt;
-  DateTime? _rangeFrom;
-  DateTime? _rangeTo;
-  List<DailyPrayers>? _rangeCache;
-  List<Map<String, dynamic>>? _storedRaw;
+  static const _prefix = 'prayer_day_v2_';
+  final _memory = <String, ({DailyPrayers day, DateTime fetched})>{};
+  final _dailyRequests = <String, Future<DailyPrayers>>{};
+  final _rangeRequests = <String, Future<List<DailyPrayers>>>{};
 
   @override
-  Future<DailyPrayers> today() async {
-    return forDate(DateTime.now());
+  Future<DailyPrayers> today() => forDate(prayerToday());
+
+  @override
+  Future<DailyPrayers> forDate(DateTime date) {
+    date = DateTime(date.year, date.month, date.day);
+    final key = _date(date);
+    final cached = _memory[key];
+    if (cached != null &&
+        DateTime.now().difference(cached.fetched) <
+            const Duration(minutes: 5)) {
+      return Future.value(cached.day);
+    }
+    return _dailyRequests.putIfAbsent(
+      key,
+      () => _fetchDay(date).whenComplete(() {
+        _dailyRequests.remove(key);
+      }),
+    );
   }
 
-  @override
-  Future<DailyPrayers> forDate(DateTime date) async {
-    final cached = _cachedDay(date);
-    if (cached != null) return cached;
+  Future<DailyPrayers> _fetchDay(DateTime date) async {
     try {
-      final data = await _api.get(
-        '/prayer-times/today',
-        query: {'date': _dateValue(date)},
-      );
-      return DailyPrayers.fromJson(data as Map<String, dynamic>);
+      final raw =
+          await _api.get('/prayer-times/today', query: {'date': _date(date)})
+              as Map<String, dynamic>;
+      final day = DailyPrayers.fromJson(raw);
+      if (_date(day.date) != _date(date)) {
+        throw const FormatException('Wrong prayer date');
+      }
+      await _store([raw]);
+      return day;
     } catch (_) {
-      final stored = await _storedDay(date);
-      if (stored != null) return stored;
+      final stored = await _stored(from: date, to: date);
+      if (stored.isNotEmpty) return stored.first;
       rethrow;
     }
-  }
-
-  Future<DailyPrayers?> _storedDay(DateTime date) async {
-    for (final day in await _loadStored()) {
-      if (day.date.year == date.year &&
-          day.date.month == date.month &&
-          day.date.day == date.day) {
-        return day;
-      }
-    }
-    return null;
-  }
-
-  Future<List<DailyPrayers>> _loadStored() async {
-    final raw = _storedRaw ?? await _readStore();
-    try {
-      return raw.map(DailyPrayers.fromJson).toList()
-        ..sort((a, b) => a.date.compareTo(b.date));
-    } catch (_) {
-      return const [];
-    }
-  }
-
-  Future<List<Map<String, dynamic>>> _readStore() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final value = prefs.getString(_storeKey);
-      if (value == null) return const [];
-      final decoded = (jsonDecode(value) as List).cast<Map<String, dynamic>>();
-      _storedRaw = decoded;
-      return decoded;
-    } catch (_) {
-      return const [];
-    }
-  }
-
-  Future<void> _writeStore(List<Map<String, dynamic>> items) async {
-    _storedRaw = items;
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_storeKey, jsonEncode(items));
-    } catch (_) {}
   }
 
   @override
   Future<List<DailyPrayers>> range({
     required DateTime from,
     required DateTime to,
-  }) async {
-    final fetchedAt = _rangeFetchedAt;
-    if (_rangeFrom == from &&
-        _rangeTo == to &&
-        fetchedAt != null &&
-        DateTime.now().difference(fetchedAt) < const Duration(minutes: 5) &&
-        _rangeCache != null) {
-      return _rangeCache!;
+  }) {
+    from = DateTime(from.year, from.month, from.day);
+    to = DateTime(to.year, to.month, to.day);
+    if (to.isBefore(from)) {
+      return Future.error(ArgumentError('Invalid prayer date range'));
     }
-    final days = to.difference(from).inDays + 1;
+    final cached = <DailyPrayers>[];
+    for (
+      var date = from;
+      !date.isAfter(to);
+      date = DateTime(date.year, date.month, date.day + 1)
+    ) {
+      final value = _memory[_date(date)];
+      if (value == null ||
+          DateTime.now().difference(value.fetched) >=
+              const Duration(minutes: 5)) {
+        break;
+      }
+      cached.add(value.day);
+    }
+    final count =
+        DateTime.utc(
+          to.year,
+          to.month,
+          to.day,
+        ).difference(DateTime.utc(from.year, from.month, from.day)).inDays +
+        1;
+    if (cached.length == count) return Future.value(cached);
+    final key = '${_date(from)}/${_date(to)}';
+    return _rangeRequests.putIfAbsent(
+      key,
+      () => _fetchRange(from, to, count).whenComplete(() {
+        _rangeRequests.remove(key);
+      }),
+    );
+  }
+
+  Future<List<DailyPrayers>> _fetchRange(
+    DateTime from,
+    DateTime to,
+    int count,
+  ) async {
     try {
       final data = await _api.getEnvelope(
         '/prayer-times',
         query: {
-          'from': _dateValue(from),
-          'to': _dateValue(to),
-          'per_page': days.clamp(1, 100),
+          'from': _date(from),
+          'to': _date(to),
+          'per_page': count.clamp(1, 100),
         },
       );
-      final items = (data as Map<String, dynamic>)['data'] as List? ?? const [];
-      final raw = items.cast<Map<String, dynamic>>();
-      final result = raw.map(DailyPrayers.fromJson).toList()
-        ..sort((a, b) => a.date.compareTo(b.date));
-      _rangeFrom = from;
-      _rangeTo = to;
-      _rangeFetchedAt = DateTime.now();
-      _rangeCache = result;
-      await _writeStore(raw);
-      return result;
+      final items = (data as Map<String, dynamic>)['data'] as List;
+      final valid = <Map<String, dynamic>>[];
+      for (final item in items) {
+        try {
+          final raw = item as Map<String, dynamic>;
+          final day = DailyPrayers.fromJson(raw);
+          if (!day.date.isBefore(from) && !day.date.isAfter(to)) valid.add(raw);
+        } catch (_) {
+          /* A malformed day must not discard all cached days. */
+        }
+      }
+      if (valid.isEmpty) throw const FormatException('No valid prayer dates');
+      await _store(valid);
+      final merged = {
+        for (final day in await _stored(from: from, to: to))
+          _date(day.date): day,
+      };
+      for (final raw in valid) {
+        final day = DailyPrayers.fromJson(raw);
+        merged[_date(day.date)] = day;
+      }
+      return merged.values.toList()..sort((a, b) => a.date.compareTo(b.date));
     } catch (_) {
-      final stored = await _loadStored();
-      final usable = stored
-          .where((day) => !day.date.isBefore(from) && !day.date.isAfter(to))
-          .toList();
-      if (usable.isNotEmpty) return usable;
+      final stored = await _stored(from: from, to: to);
+      if (stored.isNotEmpty) return stored;
       rethrow;
     }
   }
 
-  DailyPrayers? _cachedDay(DateTime date) {
-    final fetchedAt = _rangeFetchedAt;
-    if (fetchedAt == null ||
-        DateTime.now().difference(fetchedAt) >= const Duration(minutes: 5)) {
-      return null;
-    }
-    for (final day in _rangeCache ?? const <DailyPrayers>[]) {
-      if (day.date.year == date.year &&
-          day.date.month == date.month &&
-          day.date.day == date.day) {
-        return day;
+  Future<List<DailyPrayers>> _stored({
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.reload();
+    final byDate = <String, DailyPrayers>{};
+    // Read legacy data for upgrades. New writes use independent date keys so a
+    // foreground single-day fetch cannot overwrite a background range cache.
+    try {
+      final legacy =
+          jsonDecode(prefs.getString('prayer_times_cache') ?? '[]') as List;
+      for (final raw in legacy) {
+        try {
+          final day = DailyPrayers.fromJson(raw as Map<String, dynamic>);
+          byDate[_date(day.date)] = day;
+        } catch (_) {}
       }
+    } catch (_) {}
+    for (
+      var date = from;
+      !date.isAfter(to);
+      date = DateTime(date.year, date.month, date.day + 1)
+    ) {
+      try {
+        final raw = prefs.getString('$_prefix${_date(date)}');
+        if (raw == null) continue;
+        final day = DailyPrayers.fromJson(
+          jsonDecode(raw) as Map<String, dynamic>,
+        );
+        if (_date(day.date) == _date(date)) byDate[_date(date)] = day;
+      } catch (_) {}
     }
-    return null;
+    return byDate.values
+        .where((d) => !d.date.isBefore(from) && !d.date.isAfter(to))
+        .toList()
+      ..sort((a, b) => a.date.compareTo(b.date));
   }
 
-  String _dateValue(DateTime date) {
-    final month = date.month.toString().padLeft(2, '0');
-    final day = date.day.toString().padLeft(2, '0');
-    return '${date.year}-$month-$day';
+  Future<void> _store(List<Map<String, dynamic>> rawDays) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.reload();
+    final now = prayerToday();
+    for (final raw in rawDays) {
+      final day = DailyPrayers.fromJson(raw);
+      final key = _date(day.date);
+      _memory[key] = (day: day, fetched: DateTime.now());
+      await prefs.setString('$_prefix$key', jsonEncode(raw));
+    }
+    final oldest = DateTime(now.year, now.month, now.day - 30);
+    final newest = DateTime(now.year, now.month, now.day + 90);
+    for (final key in prefs.getKeys().where((k) => k.startsWith(_prefix))) {
+      final date = DateTime.tryParse(key.substring(_prefix.length));
+      if (date == null || date.isBefore(oldest) || date.isAfter(newest)) {
+        await prefs.remove(key);
+      }
+    }
+    if (_memory.length > 150) {
+      final keys = _memory.keys.toList();
+      for (final key in keys.take(_memory.length - 150)) {
+        _memory.remove(key);
+      }
+    }
   }
+
+  String _date(DateTime date) =>
+      '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 }

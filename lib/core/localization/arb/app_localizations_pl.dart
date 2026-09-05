@@ -361,4 +361,58 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get openSystemSettings => 'Otwórz ustawienia systemowe';
+
+  @override
+  String get notificationCoverageTitle => 'Przypomnienia wymagają odświeżenia';
+
+  @override
+  String get notificationCoverageBody =>
+      'Otwórz CKI Katowice, aby odświeżyć nadchodzące przypomnienia o modlitwach.';
+
+  @override
+  String get refreshReminders => 'Odśwież przypomnienia';
+
+  @override
+  String get testLockedScreen => 'Test przy zablokowanym ekranie';
+
+  @override
+  String get notificationTestScheduled =>
+      'Zablokuj ekran. Powiadomienie testowe zaplanowano za 15 sekund.';
+
+  @override
+  String get notificationTestFailed =>
+      'Nie udało się zaplanować testu. Sprawdź uprawnienia do powiadomień i spróbuj ponownie.';
+
+  @override
+  String notificationNextAt(String time) {
+    return 'Następne przypomnienie (Katowice): $time';
+  }
+
+  @override
+  String notificationLastRefresh(String time) {
+    return 'Ostatnie odświeżenie: $time';
+  }
+
+  @override
+  String get notificationsAllOff =>
+      'Powiadomienia dla wszystkich modlitw są wyłączone.';
+
+  @override
+  String get notificationReliabilityHelp =>
+      'Przypomnienia są zaplanowane w telefonie. Odświeżanie w tle przedłuża harmonogram, gdy system na to pozwala. Jeśli alerty są opóźnione, sprawdź ustawienia powiadomień i baterii.';
+
+  @override
+  String get qiblaLocationFailed =>
+      'Nie udało się ustalić lokalizacji. Włącz usługi lokalizacyjne i spróbuj ponownie.';
+
+  @override
+  String get qiblaCompassUnavailable =>
+      'Na tym urządzeniu odczyt kompasu jest niedostępny.';
+
+  @override
+  String get retryAction => 'Spróbuj ponownie';
+
+  @override
+  String get playbackFailed =>
+      'Odtwarzanie nie powiodło się. Sprawdź połączenie i spróbuj ponownie.';
 }

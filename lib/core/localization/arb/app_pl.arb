@@ -109,5 +109,33 @@
   "notificationScheduleFailed": "Nie udało się zaktualizować przypomnień. Istniejące przypomnienia zachowano.",
   "notificationDelayedHint": "Przypomnienia są włączone, ale Android może je opóźnić do czasu przyznania dostępu do dokładnych alarmów.",
   "testNotificationScheduled": "Test zaplanowany. Zablokuj teraz ekran; powiadomienie pojawi się za około 15 sekund.",
-  "openSystemSettings": "Otwórz ustawienia systemowe"
+  "openSystemSettings": "Otwórz ustawienia systemowe",
+  "notificationCoverageTitle": "Przypomnienia wymagają odświeżenia",
+  "notificationCoverageBody": "Otwórz CKI Katowice, aby odświeżyć nadchodzące przypomnienia o modlitwach.",
+  "refreshReminders": "Odśwież przypomnienia",
+  "testLockedScreen": "Test przy zablokowanym ekranie",
+  "notificationTestScheduled": "Zablokuj ekran. Powiadomienie testowe zaplanowano za 15 sekund.",
+  "notificationTestFailed": "Nie udało się zaplanować testu. Sprawdź uprawnienia do powiadomień i spróbuj ponownie.",
+  "notificationNextAt": "Następne przypomnienie (Katowice): {time}",
+  "notificationLastRefresh": "Ostatnie odświeżenie: {time}",
+  "notificationsAllOff": "Powiadomienia dla wszystkich modlitw są wyłączone.",
+  "notificationReliabilityHelp": "Przypomnienia są zaplanowane w telefonie. Odświeżanie w tle przedłuża harmonogram, gdy system na to pozwala. Jeśli alerty są opóźnione, sprawdź ustawienia powiadomień i baterii.",
+  "qiblaLocationFailed": "Nie udało się ustalić lokalizacji. Włącz usługi lokalizacyjne i spróbuj ponownie.",
+  "qiblaCompassUnavailable": "Na tym urządzeniu odczyt kompasu jest niedostępny.",
+  "retryAction": "Spróbuj ponownie",
+  "playbackFailed": "Odtwarzanie nie powiodło się. Sprawdź połączenie i spróbuj ponownie.",
+  "@notificationNextAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "@notificationLastRefresh": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  }
 }

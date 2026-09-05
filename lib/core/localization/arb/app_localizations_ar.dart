@@ -358,4 +358,56 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get openSystemSettings => 'فتح إعدادات النظام';
+
+  @override
+  String get notificationCoverageTitle => 'تحتاج تنبيهات الصلاة إلى تحديث';
+
+  @override
+  String get notificationCoverageBody =>
+      'افتح تطبيق CKI Katowice لتحديث تنبيهات الصلوات القادمة.';
+
+  @override
+  String get refreshReminders => 'تحديث التنبيهات';
+
+  @override
+  String get testLockedScreen => 'اختبار مع قفل الشاشة';
+
+  @override
+  String get notificationTestScheduled =>
+      'اقفل الشاشة. تم جدولة إشعار تجريبي بعد 15 ثانية.';
+
+  @override
+  String get notificationTestFailed =>
+      'تعذرت جدولة الاختبار. تحقق من أذونات الإشعارات وحاول مجدداً.';
+
+  @override
+  String notificationNextAt(String time) {
+    return 'التنبيه القادم (كاتوفيتسه): $time';
+  }
+
+  @override
+  String notificationLastRefresh(String time) {
+    return 'آخر تحديث: $time';
+  }
+
+  @override
+  String get notificationsAllOff => 'تنبيهات جميع الصلوات متوقفة.';
+
+  @override
+  String get notificationReliabilityHelp =>
+      'تتم جدولة التنبيهات على هاتفك. يمدد التحديث في الخلفية الجدول عندما يسمح النظام بذلك. تحقق من إعدادات الإشعارات والبطارية إذا تأخرت التنبيهات.';
+
+  @override
+  String get qiblaLocationFailed =>
+      'تعذر تحديد الموقع. فعّل خدمات الموقع وحاول مجدداً.';
+
+  @override
+  String get qiblaCompassUnavailable =>
+      'قراءة البوصلة غير متاحة على هذا الجهاز.';
+
+  @override
+  String get retryAction => 'حاول مجدداً';
+
+  @override
+  String get playbackFailed => 'تعذر التشغيل. تحقق من الاتصال وحاول مجدداً.';
 }

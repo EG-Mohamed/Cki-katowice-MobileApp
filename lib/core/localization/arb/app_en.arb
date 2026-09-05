@@ -11,7 +11,11 @@
   "greeting": "Assalamu Alaikum",
   "nextPrayer": "Next prayer",
   "timeRemaining": "in {time}",
-  "@timeRemaining": { "placeholders": { "time": {} } },
+  "@timeRemaining": {
+    "placeholders": {
+      "time": {}
+    }
+  },
   "prayerNow": "It's time",
   "fajr": "Fajr",
   "sunrise": "Sunrise",
@@ -34,13 +38,21 @@
   "qiblaInstruction": "Hold your phone flat and turn until the marker aligns with the Kaaba.",
   "qiblaAligned": "You are facing the Qibla",
   "qiblaDistance": "{km} km to the Kaaba",
-  "@qiblaDistance": { "placeholders": { "km": {} } },
+  "@qiblaDistance": {
+    "placeholders": {
+      "km": {}
+    }
+  },
   "qiblaPermission": "Location & sensor access is needed to find the Qibla.",
   "grantAccess": "Grant access",
   "calibrateHint": "Move your phone in a figure-8 to calibrate the compass.",
   "surahs": "Surahs",
   "verses": "{count} verses",
-  "@verses": { "placeholders": { "count": {} } },
+  "@verses": {
+    "placeholders": {
+      "count": {}
+    }
+  },
   "translation": "Translation",
   "fontSize": "Font size",
   "listenQuran": "Listen to surah",
@@ -51,7 +63,11 @@
   "upcoming": "Upcoming",
   "past": "Past",
   "khatib": "Delivered by {name}",
-  "@khatib": { "placeholders": { "name": {} } },
+  "@khatib": {
+    "placeholders": {
+      "name": {}
+    }
+  },
   "settings": "Settings",
   "language": "Language",
   "notifications": "Notifications",
@@ -70,7 +86,11 @@
   "emptyKhutba": "No Khutba published yet.",
   "quranUnavailable": "Quran content is unavailable.",
   "notificationBody": "It is time for {prayer} prayer.",
-  "@notificationBody": { "placeholders": { "prayer": {} } },
+  "@notificationBody": {
+    "placeholders": {
+      "prayer": {}
+    }
+  },
   "notificationTitle": "Time for prayer",
   "adhanOn": "Adhan on",
   "adhanOff": "Adhan off",
@@ -111,9 +131,42 @@
   "exactAlarmHint": "For exact on-time reminders, allow 'Alarms & reminders' for this app in system settings.",
   "notificationSyncing": "Updating prayer reminders…",
   "notificationScheduled": "{count} reminders scheduled through {date}.",
-  "@notificationScheduled": { "placeholders": { "count": {}, "date": {} } },
+  "@notificationScheduled": {
+    "placeholders": {
+      "count": {},
+      "date": {}
+    }
+  },
   "notificationScheduleFailed": "Prayer reminders could not be updated. Existing reminders were kept.",
   "notificationDelayedHint": "Reminders are enabled, but Android may delay them until exact alarm access is granted.",
   "testNotificationScheduled": "Test scheduled. Lock the screen now; it will arrive in about 15 seconds.",
-  "openSystemSettings": "Open system settings"
+  "openSystemSettings": "Open system settings",
+  "notificationCoverageTitle": "Prayer reminders need a refresh",
+  "notificationCoverageBody": "Open CKI Katowice to refresh upcoming prayer reminders.",
+  "refreshReminders": "Refresh reminders",
+  "testLockedScreen": "Test with screen locked",
+  "notificationTestScheduled": "Lock your screen. A test notification is scheduled for 15 seconds from now.",
+  "notificationTestFailed": "Could not schedule the test. Check notification permissions and try again.",
+  "notificationNextAt": "Next reminder (Katowice): {time}",
+  "notificationLastRefresh": "Last refresh: {time}",
+  "notificationsAllOff": "Notifications are turned off for all prayers.",
+  "notificationReliabilityHelp": "Prayer reminders are scheduled on your phone. Background refresh extends coverage when the system allows it. Check notification and battery settings if alerts are delayed.",
+  "qiblaLocationFailed": "Location could not be obtained. Enable location services and try again.",
+  "qiblaCompassUnavailable": "This device has no available compass reading.",
+  "retryAction": "Try again",
+  "playbackFailed": "Playback failed. Check your connection and try again.",
+  "@notificationNextAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "@notificationLastRefresh": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  }
 }

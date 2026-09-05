@@ -7,7 +7,6 @@ import 'package:provider/provider.dart';
 import 'app.dart';
 import 'data/api/api_client.dart';
 import 'data/audio/audio_handler.dart';
-import 'data/models/prayer.dart';
 import 'data/services/announcement_service.dart';
 import 'data/services/khutba_service.dart';
 import 'data/services/mp3quran_service.dart';
@@ -67,23 +66,6 @@ Future<void> main() async {
     gateway: notificationService,
     localeCode: () => localeController.locale.languageCode,
   );
-  prayerController.onPrayerDue = (day, slot) {
-    unawaited(prayerNotificationCoordinator.showNow(day, slot));
-    unawaited(prayerNotificationCoordinator.synchronize(force: true));
-  };
-  PrayerName? lastNextPrayer;
-  prayerController.addListener(() {
-    final next = prayerController.nextPrayer?.name;
-    if (next != null && next != lastNextPrayer) {
-      lastNextPrayer = next;
-      unawaited(
-        prayerNotificationCoordinator.synchronize(
-          force: !prayerNotificationCoordinator.everSucceeded,
-        ),
-      );
-    }
-  });
-
   unawaited(announcementController.load());
 
   final settingsController = SettingsController(ApiSettingsService(apiClient));

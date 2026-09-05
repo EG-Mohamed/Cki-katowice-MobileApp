@@ -14,6 +14,8 @@ class AnnouncementController extends ChangeNotifier {
   List<Announcement> _all = const [];
   Set<String> _dismissed = {};
   bool _isLoading = false;
+  int _generation = 0;
+  bool _disposed = false;
 
   bool get isLoading => _isLoading;
 
@@ -29,16 +31,20 @@ class AnnouncementController extends ChangeNotifier {
   }
 
   Future<void> load() async {
+    final generation = ++_generation;
     _isLoading = true;
     notifyListeners();
     try {
-      _all = await _service.active();
+      final result = await _service.active();
+      if (_disposed || generation != _generation) return;
+      _all = result;
     } catch (_) {
+      if (_disposed || generation != _generation) return;
       _all = const [];
     } finally {
-      _isLoading = false;
+      if (!_disposed && generation == _generation) _isLoading = false;
     }
-    notifyListeners();
+    if (!_disposed) notifyListeners();
   }
 
   Future<void> loadDismissed() async {
@@ -53,7 +59,7 @@ class AnnouncementController extends ChangeNotifier {
   Future<void> dismiss(String id) async {
     _dismissed.add(id);
     await _persist();
-    notifyListeners();
+    if (!_disposed) notifyListeners();
   }
 
   Future<void> _persist() async {
@@ -70,5 +76,12 @@ class AnnouncementController extends ChangeNotifier {
       case AnnouncementType.general:
         return 2;
     }
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _generation++;
+    super.dispose();
   }
 }

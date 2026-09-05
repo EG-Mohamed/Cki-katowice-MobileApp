@@ -11,6 +11,8 @@ class ApiClient {
   final http.Client _client;
   String locale;
 
+  void close() => _client.close();
+
   Future<dynamic> get(
     String path, {
     Map<String, Object?> query = const {},
@@ -30,10 +32,10 @@ class ApiClient {
       '$baseUrl$path',
     ).replace(queryParameters: _queryParameters(query));
     final response = await _client
-        .get(uri, headers: {
-          'Accept': 'application/json',
-          'Accept-locale': locale,
-        })
+        .get(
+          uri,
+          headers: {'Accept': 'application/json', 'Accept-locale': locale},
+        )
         .timeout(const Duration(seconds: 12));
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw ApiException(response.statusCode);

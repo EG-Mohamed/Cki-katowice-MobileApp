@@ -32,6 +32,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
   Surah? _surah;
   String? _locale;
   int? _playingAyah;
+  int _audioGeneration = 0;
 
   @override
   void initState() {
@@ -63,29 +64,53 @@ class _ReaderScreenState extends State<ReaderScreen> {
     }
   }
 
-  Future<void> _toggleAudio(Ayah ayah) async {
-    final audioUrl = ayah.audioUrl;
-    if (audioUrl == null) return;
-    if (_playingAyah == ayah.number) {
-      await _player.stop();
-      if (!mounted) return;
-      setState(() => _clearPlaybackState());
-      return;
-    }
-    await context.read<QuranPlayerController>().stop();
-    try {
-      await _player.stop();
-      await _player.setUrl(audioUrl);
-      await _player.play();
-      if (!mounted) return;
-      setState(() => _playingAyah = ayah.number);
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _clearPlaybackState());
+  @override
+  void didUpdateWidget(covariant ReaderScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.surahNumber != widget.surahNumber) {
+      _audioGeneration++;
+      unawaited(_player.stop());
+      _playingAyah = null;
+      _surah = null;
+      _future = context.read<QuranService>().surah(
+        widget.surahNumber,
+        locale: _locale,
+      );
     }
   }
 
+  Future<void> _toggleAudio(Ayah ayah) async {
+    final audioUrl = ayah.audioUrl;
+    if (audioUrl == null) return;
+    final generation = ++_audioGeneration;
+    final stopping = _playingAyah == ayah.number;
+    setState(() => _playingAyah = stopping ? null : ayah.number);
+    try {
+      await _player.stop();
+      if (!mounted || generation != _audioGeneration || stopping) return;
+      await context.read<QuranPlayerController>().stop();
+      if (!mounted || generation != _audioGeneration) return;
+      await _player.setUrl(audioUrl);
+      if (!mounted || generation != _audioGeneration) return;
+      unawaited(
+        _player.play().catchError((Object _) {
+          if (mounted && generation == _audioGeneration) _audioFailed();
+        }),
+      );
+    } catch (_) {
+      if (mounted && generation == _audioGeneration) _audioFailed();
+    }
+  }
+
+  void _audioFailed() {
+    setState(() => _clearPlaybackState());
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(AppLocalizations.of(context).playbackFailed)),
+    );
+  }
+
   Future<void> _toggleSurahAudio() async {
+    _audioGeneration++;
     final surah = _surah;
     if (surah == null) return;
     final controller = context.read<QuranPlayerController>();
@@ -94,7 +119,8 @@ class _ReaderScreenState extends State<ReaderScreen> {
       return;
     }
     await _player.stop();
-    if (mounted) setState(() => _clearPlaybackState());
+    if (!mounted) return;
+    setState(() => _clearPlaybackState());
     final isCurrent =
         controller.currentSurah?.id == widget.surahNumber &&
         controller.isPlaying;
@@ -122,6 +148,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
   @override
   void dispose() {
+    _audioGeneration++;
     _completeSubscription?.cancel();
     _player.dispose();
     super.dispose();

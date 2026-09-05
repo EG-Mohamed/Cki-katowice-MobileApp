@@ -38,8 +38,14 @@ class QiblaService {
   }
 
   Future<void> resolveLocation() async {
+    if (!await Geolocator.isLocationServiceEnabled()) {
+      throw StateError('Location services are disabled');
+    }
     final position = await Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(accuracy: LocationAccuracy.low),
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.low,
+        timeLimit: Duration(seconds: 15),
+      ),
     );
     _qiblaBearing = _bearingToKaaba(position.latitude, position.longitude);
     _distanceKm =
@@ -60,12 +66,19 @@ class QiblaService {
     await for (final event in events) {
       final heading = event.heading;
       final bearing = _qiblaBearing;
-      if (heading == null || bearing == null) continue;
+      if (heading == null ||
+          !heading.isFinite ||
+          heading < 0 ||
+          bearing == null) {
+        continue;
+      }
       final now = DateTime.now();
       if (now.difference(lastEmission) < const Duration(milliseconds: 66)) {
         continue;
       }
-      if (lastHeading != null && (heading - lastHeading).abs() < 0.25) {
+      if (lastHeading != null &&
+          (heading - lastHeading).abs() < 0.25 &&
+          now.difference(lastEmission) < const Duration(seconds: 1)) {
         continue;
       }
       lastEmission = now;
