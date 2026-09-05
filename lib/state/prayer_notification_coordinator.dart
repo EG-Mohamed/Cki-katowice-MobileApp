@@ -57,7 +57,7 @@ class PrayerNotificationCoordinator extends ChangeNotifier
     if (_started || _disposed) return;
     _started = true;
     WidgetsBinding.instance.addObserver(this);
-    await synchronize(requestPermissions: true);
+    await synchronize(requestPermissions: true, force: true);
   }
 
   @override
@@ -89,7 +89,7 @@ class PrayerNotificationCoordinator extends ChangeNotifier
   Future<void> requestExactAlarmAccess() async {
     try {
       await _gateway.requestExactAlarmPermission();
-      await synchronize();
+      await synchronize(force: true);
     } catch (e) {
       _failed(e);
     }
@@ -123,7 +123,7 @@ class PrayerNotificationCoordinator extends ChangeNotifier
 
   Future<void> synchronize({
     bool requestPermissions = false,
-    bool force = true,
+    bool force = false,
   }) {
     if (_disposed) return Future.value();
     _requestQueued |= requestPermissions;

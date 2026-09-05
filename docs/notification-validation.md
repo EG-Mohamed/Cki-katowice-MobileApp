@@ -4,10 +4,10 @@
 
 - `PrayerScheduler` is shared by the foreground coordinator and the Workmanager entry point. OS local notifications deliver each alert; Flutter timers only update the visible countdown.
 - Android schedules `exactAllowWhileIdle` with user-granted Alarms & reminders access. Without it, reminders use `inexactAllowWhileIdle`, and Settings explicitly warns that delivery may be delayed. App notification permission and the prayer channel are checked separately.
-- Android schedules 30 days ahead. iOS schedules up to 60 prayer alerts over 12 calendar days, accounting for unrelated pending requests and reserving slots for a coverage reminder and test.
+- Android schedules today and the next 6 calendar days (at most 35 prayer alerts). Existing Android requests beyond this window are removed, including during offline refreshes. iOS schedules up to 60 prayer alerts over 12 calendar days, accounting for unrelated pending requests and reserving slots for a coverage reminder and test.
 - The unique Workmanager task is `pl.ckikatowice.app.prayerRefresh`. Android requests a 12-hour interval; iOS receives a 12-hour earliest-start hint. OS scheduling is opportunistic. Registering work is separate from delivering prayer alerts.
 - SQLite provides a cross-isolate scheduling lock via the sqflite plugin. Contention retries in Dart, rather than blocking the native database executor. Preference changes use the same lock; the scheduler reloads preferences after acquisition.
-- Stable IDs preserve upgrades. Payloads encode prayer/date/UTC time/precision/language for reconciliation. Android pending requests are plugin metadata, not an OS alarm audit: launch, resume and worker runs reapply Android alarms. iOS retains unchanged requests.
+- Stable IDs preserve upgrades. Payloads encode prayer/date/UTC time/precision/language for reconciliation. Android pending requests are plugin metadata, not an OS alarm audit: launch, explicit repair and worker runs reapply Android alarms. Routine foreground refreshes retain unchanged requests and only add missing or changed alarms. iOS retains unchanged requests.
 - Offline caching is per date and reads the old cache on upgrades. Corrupt rows do not discard valid dates. Gaps/partial failures are visible, and failures preserve existing reminders. User-requested muting still cancels alerts offline.
 - The iOS coverage reminder asks the user to open the app 24 hours before the last completely scheduled day's coverage expires. The existing 13-second adhan asset remains within iOS's custom notification sound limit.
 
@@ -58,7 +58,7 @@ Android force-stop and manufacturer restrictions, and iOS Focus/notification set
 ## Validation recorded on 2026-09-05
 
 - Flutter analysis: clean.
-- Unit/widget suite: 25 passed.
+- Unit/widget suite: 29 passed after the seven-day Android window change, including rolling replenishment, offline migration cleanup, and foreground refresh without unchanged alarm rewrites.
 - iPhone 17 Pro simulator, iOS 26.5: four native plugin integration tests passed.
 - Android optimized per-ABI APKs: built and signature-verified with the local debug key. ARM64 APK is approximately 24.3 MB.
 - Android resource audit: adhan bytes match the source asset; notification icon, scheduled/boot receivers, Workmanager initializer and job service remain packaged.

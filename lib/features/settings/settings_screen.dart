@@ -279,7 +279,10 @@ class _NotificationActionsState extends State<_NotificationActions> {
             TextButton.icon(
               onPressed: status.syncState == PrayerNotificationSyncState.syncing
                   ? null
-                  : () => notif.synchronize(requestPermissions: true),
+                  : () => notif.synchronize(
+                      requestPermissions: true,
+                      force: true,
+                    ),
               icon: const Icon(Icons.refresh),
               label: Text(l10n.refreshReminders),
             ),

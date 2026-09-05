@@ -74,7 +74,7 @@ Future<void> main() async {
   localeController.addListener(() {
     announcementController.load();
     settingsController.load();
-    unawaited(prayerNotificationCoordinator.synchronize(force: true));
+    unawaited(prayerNotificationCoordinator.synchronize());
   });
 
   runApp(

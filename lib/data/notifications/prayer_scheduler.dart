@@ -47,7 +47,7 @@ class PrayerScheduler {
       final to = DateTime(
         from.year,
         from.month,
-        from.day + (gateway.isIOS ? 11 : 29),
+        from.day + (gateway.isIOS ? 11 : 6),
       );
       try {
         fetchedDays = await prayerService.range(from: from, to: to);
@@ -69,6 +69,11 @@ class PrayerScheduler {
           ? storedLocale!
           : 'en';
       final now = tz.TZDateTime.from(_now(), gateway.prayerLocation);
+      final horizon = DateTime(
+        now.year,
+        now.month,
+        now.day + (gateway.isIOS ? 11 : 6),
+      );
       var exact = await gateway.canScheduleExactAlarms();
       var pending = await gateway.pendingRequests();
       DateTime? lastRefresh;
@@ -85,13 +90,16 @@ class PrayerScheduler {
       final permission = await gateway.notificationsEnabled();
 
       try {
-        // Muting must work offline and even after permission has been revoked.
+        // Muting and trimming the previous 30-day Android window must also
+        // work offline and after permission has been revoked.
         for (final request in pending.where(_managed)) {
           final name = _prayerOf(request);
           if (enabled.isEmpty ||
               (name != null && !enabled.contains(name)) ||
               (_instantOf(request)?.isBefore(now) ?? false) ||
-              (_dateOf(request)?.compareTo(_date(now)) ?? 0) < 0) {
+              (_dateOf(request)?.compareTo(_date(now)) ?? 0) < 0 ||
+              (gateway.isAndroid &&
+                  (_dateOf(request)?.compareTo(_date(horizon)) ?? 0) > 0)) {
             await gateway.cancel(request.id);
           }
         }
@@ -102,7 +110,7 @@ class PrayerScheduler {
           final to = DateTime(
             from.year,
             from.month,
-            from.day + (gateway.isIOS ? 11 : 29),
+            from.day + (gateway.isIOS ? 11 : 6),
           );
           if (fetchError != null) throw fetchError;
           final byDate = {for (final day in fetchedDays) _date(day.date): day};
@@ -175,7 +183,8 @@ class PrayerScheduler {
           var count = (await gateway.pendingRequests()).where(_managed).length;
           for (final alarm in desired.values) {
             // Android's pending API is plugin persistence, not an AlarmManager
-            // query. Reapply on launch/resume and worker runs to repair OS removals.
+            // query. Explicit repairs, launch and worker runs reapply alarms;
+            // routine foreground refreshes only write changed or missing alarms.
             if (!(force && gateway.isAndroid) &&
                 existing[alarm.id]?.payload == alarm.payload) {
               continue;

@@ -159,12 +159,12 @@ void main() {
     );
   });
   test(
-    'Android retains 30 days without foreground notification delivery',
+    'Android retains 7 days without foreground notification delivery',
     () async {
       final status = await scheduler.synchronize();
       expect(status.syncState, PrayerNotificationSyncState.ready);
-      expect(status.scheduledCount, 150);
-      expect(status.scheduledThrough, DateTime(2026, 10, 4));
+      expect(status.scheduledCount, 35);
+      expect(status.scheduledThrough, DateTime(2026, 9, 11));
       expect(status.nextNotification, DateTime.utc(2026, 9, 5, 3));
     },
   );
@@ -188,8 +188,83 @@ void main() {
     gateway.exact = true;
     await scheduler.synchronize();
     expect(gateway.modes.values.every((v) => v), true);
-    expect(gateway.writes, 300);
+    expect(gateway.writes, 70);
   });
+  test(
+    'rolling window adds only the new day and removes expired alarms',
+    () async {
+      await scheduler.synchronize();
+      final nextDay = PrayerScheduler(
+        prayerService: service,
+        gateway: gateway,
+        lock: lock,
+        now: () => tz.TZDateTime(prayerLocation, 2026, 9, 6),
+      );
+      final status = await nextDay.synchronize();
+      expect(status.scheduledCount, 35);
+      expect(status.scheduledThrough, DateTime(2026, 9, 12));
+      expect(gateway.writes, 40);
+      expect(
+        gateway.times.values.every((t) => t.day >= 6 && t.day <= 12),
+        true,
+      );
+    },
+  );
+  for (final offline in [false, true]) {
+    test('upgrade removes days 8–30, offline=$offline', () async {
+      await scheduler.synchronize();
+      for (var offset = 7; offset < 30; offset++) {
+        final date = DateTime(2026, 9, 5 + offset);
+        final day = date.toIso8601String().split('T').first;
+        for (final prayer in NotificationController.notifiable) {
+          final id = PrayerScheduler.notificationId(date, prayer);
+          gateway.pending[id] = PendingNotificationRequest(
+            id,
+            '',
+            '',
+            'prayer:$day:${prayer.name}|${date.toUtc().toIso8601String()}|true|en|v3',
+          );
+        }
+      }
+      gateway.pending[42] = const PendingNotificationRequest(
+        42,
+        '',
+        '',
+        'other',
+      );
+      service.fail = offline;
+      final status = await scheduler.synchronize();
+      expect(status.scheduledCount, 35);
+      expect(gateway.pending.length, 36);
+      expect(gateway.pending[42], isNotNull);
+      expect(gateway.writes, 35);
+    });
+  }
+  test(
+    'foreground refresh and mute avoid rewriting unchanged alarms; repair reapplies',
+    () async {
+      final coordinator = PrayerNotificationCoordinator(
+        preferences: NotificationController(),
+        prayerService: service,
+        gateway: gateway,
+        localeCode: () => 'en',
+        lock: lock,
+        now: () => now,
+        configureBackground: (_) async {},
+      );
+      addTearDown(coordinator.dispose);
+      await coordinator.start();
+      expect(gateway.writes, 35);
+      coordinator.didChangeAppLifecycleState(AppLifecycleState.resumed);
+      await coordinator.synchronize();
+      expect(gateway.writes, 35);
+      await coordinator.setPrayerEnabled(PrayerName.isha, false);
+      expect(gateway.pending.length, 28);
+      expect(gateway.writes, 35);
+      await coordinator.synchronize(force: true);
+      expect(gateway.writes, 63);
+    },
+  );
   test(
     'iOS respects global pending capacity including unrelated notifications',
     () async {
@@ -230,7 +305,7 @@ void main() {
       gateway.pending.values.every((p) => p.payload!.contains(':isha|')),
       true,
     );
-    expect(gateway.pending.length, 30);
+    expect(gateway.pending.length, 7);
   });
   test('partial schedule failure does not claim complete coverage', () async {
     gateway.failAfter = 3;
@@ -239,7 +314,7 @@ void main() {
     expect(status.scheduledCount, 3);
     expect(status.scheduledThrough, isNull);
     gateway.failAfter = null;
-    expect((await scheduler.synchronize()).scheduledCount, 150);
+    expect((await scheduler.synchronize()).scheduledCount, 35);
   });
   test('missing OS registrations cannot report success', () async {
     gateway.dropWrites = true;

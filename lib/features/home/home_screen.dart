@@ -31,9 +31,7 @@ class HomeScreen extends StatelessWidget {
     final prayer = context.read<PrayerController>();
     await prayer.load(date: prayer.selectedDate);
     if (!context.mounted || !prayer.isSelectedDateToday) return;
-    await context.read<PrayerNotificationCoordinator>().synchronize(
-      force: true,
-    );
+    await context.read<PrayerNotificationCoordinator>().synchronize();
   }
 
   @override
