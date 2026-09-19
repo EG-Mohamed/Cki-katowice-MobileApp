@@ -48,18 +48,10 @@ class PrayerNotificationCoordinator extends ChangeNotifier
   bool _started = false;
   bool _disposed = false;
   bool _requestQueued = false;
-  bool _forceQueued = false;
   Timer? _retry;
   Timer? _midnightTimer;
   StreamSubscription<String>? _tapSubscription;
   int _attempt = 0;
-  DateTime? _lastForcedResync;
-
-  /// Minimum spacing between resume-triggered forced resyncs, so rapidly
-  /// backgrounding/foregrounding the app cannot hammer the platform channel
-  /// and the schedule lock.
-  static const _minForcedResyncGap = Duration(minutes: 2);
-
   PrayerNotificationStatus get status => _status;
   Set<PrayerName> get enabled => _preferences.enabled;
   bool get allEnabled => _preferences.allEnabled;
@@ -76,25 +68,22 @@ class PrayerNotificationCoordinator extends ChangeNotifier
       }),
     );
     _scheduleMidnightRollover();
-    await synchronize(requestPermissions: true, force: true);
+    await synchronize(requestPermissions: true);
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      // Android's pending-notifications list is plugin-side persistence, not
-      // an AlarmManager query: after an OEM battery manager purges alarms,
-      // that list still shows them as scheduled, so a non-forced sync would
-      // see "nothing changed" and leave the app silently dead. Forcing here
-      // is what actually repairs a device that stopped notifying while
-      // closed. A resume also gets a fresh shot at retrying if the last
-      // attempt gave up permanently.
+      // A resume always re-syncs: Android's pending-notifications list is
+      // plugin-side persistence, not an AlarmManager query, so it can't be
+      // trusted as evidence that nothing needs repair after an OEM battery
+      // manager purges alarms. The scheduler itself only rewrites alarms
+      // whose payload has actually changed or gone missing, so this is
+      // cheap on the common case where nothing was purged. A resume also
+      // gets a fresh shot at retrying if the last attempt gave up
+      // permanently.
       _resetRetry();
-      final last = _lastForcedResync;
-      final shouldForce =
-          last == null || _now().difference(last) >= _minForcedResyncGap;
-      if (shouldForce) _lastForcedResync = _now();
-      unawaited(synchronize(force: shouldForce));
+      unawaited(synchronize());
       _scheduleMidnightRollover();
     } else {
       _retry?.cancel();
@@ -108,7 +97,7 @@ class PrayerNotificationCoordinator extends ChangeNotifier
     // Tapping the "your schedule is running out" reminder should trigger an
     // immediate repair rather than silently doing nothing.
     if (payload.startsWith('coverage')) {
-      unawaited(synchronize(force: true));
+      unawaited(synchronize());
     }
   }
 
@@ -120,7 +109,7 @@ class PrayerNotificationCoordinator extends ChangeNotifier
     _midnightTimer = Timer(delay, () {
       // A device left open overnight would otherwise keep a scheduling
       // window that shifted a day without ever re-syncing.
-      unawaited(synchronize(force: true));
+      unawaited(synchronize());
       _scheduleMidnightRollover();
     });
   }
@@ -147,7 +136,7 @@ class PrayerNotificationCoordinator extends ChangeNotifier
     _resetRetry();
     try {
       await _gateway.requestExactAlarmPermission();
-      await synchronize(force: true);
+      await synchronize();
     } catch (e) {
       _failed(e);
     }
@@ -160,7 +149,7 @@ class PrayerNotificationCoordinator extends ChangeNotifier
     _resetRetry();
     try {
       await _gateway.requestIgnoreBatteryOptimizations();
-      await synchronize(force: true);
+      await synchronize();
     } catch (e) {
       _failed(e);
     }
@@ -198,13 +187,9 @@ class PrayerNotificationCoordinator extends ChangeNotifier
     }
   }
 
-  Future<void> synchronize({
-    bool requestPermissions = false,
-    bool force = false,
-  }) {
+  Future<void> synchronize({bool requestPermissions = false}) {
     if (_disposed) return Future.value();
     _requestQueued |= requestPermissions;
-    _forceQueued |= force;
     if (_activeSync != null) {
       _again = true;
       return _activeSync!;
@@ -215,8 +200,6 @@ class PrayerNotificationCoordinator extends ChangeNotifier
       do {
         _again = false;
         final request = _requestQueued;
-        final repair = _forceQueued;
-        _forceQueued = false;
         _requestQueued = false;
         _update(
           _status.copyWith(
@@ -244,7 +227,7 @@ class PrayerNotificationCoordinator extends ChangeNotifier
           } catch (e) {
             registrationError = e;
           }
-          final result = await _scheduler.synchronize(force: repair);
+          final result = await _scheduler.synchronize();
           _update(result);
           if (registrationError != null) _failed(registrationError);
           if (registrationError != null ||

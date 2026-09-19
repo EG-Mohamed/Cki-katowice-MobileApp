@@ -28,7 +28,7 @@ void prayerBackgroundDispatcher() {
       final result = await PrayerScheduler(
         prayerService: ApiPrayerService(api),
         gateway: NotificationService(),
-      ).synchronize(force: true);
+      ).synchronize();
       final success = result.syncState != PrayerNotificationSyncState.failed;
       await prefs.setString(
         _lastRunKey,

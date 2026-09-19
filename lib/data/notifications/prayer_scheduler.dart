@@ -39,7 +39,7 @@ class PrayerScheduler {
   static const int _iosHorizonDays = 11;
   int get _horizonDays => gateway.isIOS ? _iosHorizonDays : _androidHorizonDays;
 
-  Future<PrayerNotificationStatus> synchronize({bool force = false}) async {
+  Future<PrayerNotificationStatus> synchronize() async {
     await gateway.init();
     // A single timestamp drives both the fetch window and the scheduling
     // window below. Taking it once (rather than once outside the lock and
@@ -175,11 +175,7 @@ class PrayerScheduler {
           }
           var count = (await gateway.pendingRequests()).where(_managed).length;
           for (final alarm in desired.values) {
-            // Android's pending API is plugin persistence, not an AlarmManager
-            // query. Explicit repairs, launch and worker runs reapply alarms;
-            // routine foreground refreshes only write changed or missing alarms.
-            if (!(force && gateway.isAndroid) &&
-                existing[alarm.id]?.payload == alarm.payload) {
+            if (existing[alarm.id]?.payload == alarm.payload) {
               continue;
             }
             if (!existing.containsKey(alarm.id) && count >= capacity) {

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
@@ -45,21 +46,27 @@ class ApiPrayerService implements PrayerService {
   }
 
   Future<DailyPrayers> _fetchDay(DateTime date) async {
-    try {
-      final raw =
-          await _api.get('/prayer-times/today', query: {'date': _date(date)})
-              as Map<String, dynamic>;
-      final day = DailyPrayers.fromJson(raw);
-      if (_date(day.date) != _date(date)) {
-        throw const FormatException('Wrong prayer date');
-      }
-      await _store([raw]);
+    final stored = await _stored(from: date, to: date);
+    if (stored.isNotEmpty) {
+      final day = stored.first;
+      final key = _date(date);
+      _memory[key] = (day: day, fetched: DateTime.now());
+      unawaited(_refreshDay(date).catchError((_) => day));
       return day;
-    } catch (_) {
-      final stored = await _stored(from: date, to: date);
-      if (stored.isNotEmpty) return stored.first;
-      rethrow;
     }
+    return _refreshDay(date);
+  }
+
+  Future<DailyPrayers> _refreshDay(DateTime date) async {
+    final raw =
+        await _api.get('/prayer-times/today', query: {'date': _date(date)})
+            as Map<String, dynamic>;
+    final day = DailyPrayers.fromJson(raw);
+    if (_date(day.date) != _date(date)) {
+      throw const FormatException('Wrong prayer date');
+    }
+    await _store([raw]);
+    return day;
   }
 
   @override

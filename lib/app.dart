@@ -21,6 +21,9 @@ class CkiApp extends StatefulWidget {
 
 class _CkiAppState extends State<CkiApp> {
   final _router = buildRouter();
+  Locale? _themeLocale;
+  bool? _themeIsDark;
+  ThemeData? _theme;
 
   static const List<String> _fullScreenPrefixes = [
     '/quran/reciters',
@@ -59,6 +62,11 @@ class _CkiAppState extends State<CkiApp> {
   Widget build(BuildContext context) {
     final locale = context.watch<LocaleController>().locale;
     final isDark = context.watch<ThemeController>().isDark;
+    if (_theme == null || _themeLocale != locale || _themeIsDark != isDark) {
+      _themeLocale = locale;
+      _themeIsDark = isDark;
+      _theme = AppTheme.build(locale, isDark: isDark);
+    }
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       onGenerateTitle: (context) => AppLocalizations.of(context).appName,
@@ -70,34 +78,37 @@ class _CkiAppState extends State<CkiApp> {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      theme: AppTheme.build(locale, isDark: isDark),
+      theme: _theme,
       routerConfig: _router,
       builder: (context, child) {
-        final hasAnnouncement =
-            context.watch<AnnouncementController>().top != null;
-        return Scaffold(
-          body: Column(
-            children: [
-              if (hasAnnouncement)
-                SafeArea(bottom: false, child: const AnnouncementBanner()),
-              Expanded(
-                child: Stack(
-                  children: [
-                    child ?? const SizedBox.shrink(),
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      child: MiniPlayer(
-                        onOpenSurah: (id) => _router.go('/quran/$id'),
-                        onOpenRadio: () => _router.go('/radio'),
-                      ),
+        return Selector<AnnouncementController, bool>(
+          selector: (_, controller) => controller.top != null,
+          builder: (context, hasAnnouncement, _) {
+            return Scaffold(
+              body: Column(
+                children: [
+                  if (hasAnnouncement)
+                    SafeArea(bottom: false, child: const AnnouncementBanner()),
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        child ?? const SizedBox.shrink(),
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          child: MiniPlayer(
+                            onOpenSurah: (id) => _router.go('/quran/$id'),
+                            onOpenRadio: () => _router.go('/radio'),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );

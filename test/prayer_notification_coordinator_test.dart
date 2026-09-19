@@ -261,7 +261,7 @@ void main() {
     });
   }
   test(
-    'foreground refresh and mute avoid rewriting unchanged alarms; repair reapplies',
+    'foreground refresh, resume and mute never rewrite unchanged alarms',
     () async {
       final coordinator = PrayerNotificationCoordinator(
         preferences: NotificationController(),
@@ -281,8 +281,8 @@ void main() {
       await coordinator.setPrayerEnabled(PrayerName.isha, false);
       expect(gateway.pending.length, 28);
       expect(gateway.writes, 35);
-      await coordinator.synchronize(force: true);
-      expect(gateway.writes, 63);
+      await coordinator.synchronize();
+      expect(gateway.writes, 35);
     },
   );
   test(
