@@ -42,6 +42,14 @@ class ApiNewsService implements NewsService {
     }
     final future = _find(slug);
     _detailCache[slug] = (storedAt: DateTime.now(), value: future);
+    // A failed fetch must not be replayed for 5 minutes: evict it so the
+    // next call (e.g. pull-to-refresh) actually retries the network.
+    future.catchError((Object error) {
+      if (identical(_detailCache[slug]?.value, future)) {
+        _detailCache.remove(slug);
+      }
+      throw error;
+    });
     return future;
   }
 

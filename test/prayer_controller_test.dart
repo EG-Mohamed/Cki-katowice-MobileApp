@@ -56,7 +56,12 @@ void main() {
       service.requests[DateTime(2026, 9, 6)]!.complete(_day(6, 7));
       await load;
       await Future<void>.delayed(Duration.zero);
-      expect(controller.remaining, const Duration(hours: 7, minutes: 7));
+      expect(
+        controller.nextPrayerAt!.difference(
+          tz.TZDateTime(prayerLocation, 2026, 9, 5, 22),
+        ),
+        const Duration(hours: 7, minutes: 7),
+      );
       expect(controller.nextPrayer!.time.minute, 7);
       controller.dispose();
     },

@@ -50,8 +50,6 @@ class QuranAudioHandler extends QuranPlaybackHandler {
   void Function()? _onComplete;
   void Function()? _onError;
 
-  AudioPlayer get player => _player;
-
   @override
   void setOnError(void Function() callback) {
     _onError = callback;

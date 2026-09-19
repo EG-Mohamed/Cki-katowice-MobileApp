@@ -16,23 +16,45 @@ class GeometricPattern extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: CustomPaint(
-        painter: _GirihPainter(
-          color: color.withValues(alpha: opacity),
-          cell: cell,
+    return RepaintBoundary(
+      child: IgnorePointer(
+        child: CustomPaint(
+          painter: _GirihPainter(
+            color: color.withValues(alpha: opacity),
+            cell: cell,
+          ),
+          size: Size.infinite,
         ),
-        size: Size.infinite,
       ),
     );
   }
 }
 
 class _GirihPainter extends CustomPainter {
-  _GirihPainter({required this.color, required this.cell});
+  _GirihPainter({required this.color, required this.cell})
+    : _star = _buildStar(cell * 0.42);
 
   final Color color;
   final double cell;
+  final Path _star;
+
+  static Path _buildStar(double radius) {
+    const points = 8;
+    final path = Path();
+    for (int i = 0; i < points * 2; i++) {
+      final isOuter = i.isEven;
+      final rad = isOuter ? radius : radius * 0.45;
+      final angle = (math.pi / points) * i - math.pi / 2;
+      final p = Offset(rad * math.cos(angle), rad * math.sin(angle));
+      if (i == 0) {
+        path.moveTo(p.dx, p.dy);
+      } else {
+        path.lineTo(p.dx, p.dy);
+      }
+    }
+    path.close();
+    return path;
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -41,33 +63,14 @@ class _GirihPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.1;
 
-    final r = cell * 0.42;
     for (double y = 0; y <= size.height + cell; y += cell) {
       for (double x = 0; x <= size.width + cell; x += cell) {
-        _drawStar(canvas, Offset(x, y), r, paint);
+        canvas.save();
+        canvas.translate(x, y);
+        canvas.drawPath(_star, paint);
+        canvas.restore();
       }
     }
-  }
-
-  void _drawStar(Canvas canvas, Offset center, double radius, Paint paint) {
-    const points = 8;
-    final path = Path();
-    for (int i = 0; i < points * 2; i++) {
-      final isOuter = i.isEven;
-      final rad = isOuter ? radius : radius * 0.45;
-      final angle = (math.pi / points) * i - math.pi / 2;
-      final p = Offset(
-        center.dx + rad * math.cos(angle),
-        center.dy + rad * math.sin(angle),
-      );
-      if (i == 0) {
-        path.moveTo(p.dx, p.dy);
-      } else {
-        path.lineTo(p.dx, p.dy);
-      }
-    }
-    path.close();
-    canvas.drawPath(path, paint);
   }
 
   @override

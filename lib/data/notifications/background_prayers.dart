@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
 
 import '../api/api_client.dart';
@@ -16,19 +17,37 @@ void prayerBackgroundDispatcher() {
     }
     final api = ApiClient();
     try {
+      // The background isolate has no app state; read the locale the
+      // foreground app persisted so the Accept-locale header (and, via the
+      // scheduler, notification text) matches what the user actually sees.
+      final prefs = await SharedPreferences.getInstance();
+      final storedLocale = prefs.getString('app_locale');
+      if (['en', 'pl', 'ar'].contains(storedLocale)) {
+        api.locale = storedLocale!;
+      }
       final result = await PrayerScheduler(
         prayerService: ApiPrayerService(api),
         gateway: NotificationService(),
-      ).synchronize(force: true);
-      return result.syncState != PrayerNotificationSyncState.failed;
-    } catch (error, stack) {
-      debugPrint('Prayer background refresh failed: $error\n$stack');
+      ).synchronize();
+      final success = result.syncState != PrayerNotificationSyncState.failed;
+      await prefs.setString(
+        _lastRunKey,
+        success ? 'ok' : (result.lastError ?? 'failed'),
+      );
+      return success;
+    } catch (error) {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(_lastRunKey, error.toString());
+      } catch (_) {}
       return false;
     } finally {
       api.close();
     }
   });
 }
+
+const _lastRunKey = 'prayer_background_last_result';
 
 class BackgroundPrayers {
   static const taskName = 'pl.ckikatowice.app.prayerRefresh';
@@ -55,6 +74,10 @@ class BackgroundPrayers {
     await Workmanager().registerPeriodicTask(
       taskName,
       taskName,
+      // The Android alarm horizon is now ~29 days, so this worker is a
+      // top-up rather than the only thing keeping the schedule alive; the
+      // in-app midnight/resume resyncs and the coverage reminder are the
+      // other two legs of the same repair strategy.
       frequency: const Duration(hours: 12),
       initialDelay: const Duration(hours: 12),
       existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,

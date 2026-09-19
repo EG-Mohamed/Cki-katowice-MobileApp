@@ -103,6 +103,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
   }
 
   void _audioFailed() {
+    if (!mounted) return;
     setState(() => _clearPlaybackState());
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(AppLocalizations.of(context).playbackFailed)),

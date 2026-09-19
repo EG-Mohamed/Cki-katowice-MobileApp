@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -15,9 +17,14 @@ class LocaleController extends ChangeNotifier {
     Locale('ar'),
   ];
 
+  /// The app is used mainly by the Polish Muslim community in Katowice, so
+  /// an unrecognised device language falls back to Polish rather than
+  /// English.
+  static const Locale _fallback = Locale('pl');
+
   final ApiClient _apiClient;
 
-  Locale _locale = const Locale('en');
+  Locale _locale = _fallback;
 
   Locale get locale => _locale;
   bool get isRtl => _locale.languageCode == 'ar';
@@ -27,9 +34,27 @@ class LocaleController extends ChangeNotifier {
     final code = prefs.getString(_key);
     if (code != null && supported.any((l) => l.languageCode == code)) {
       _locale = Locale(code);
-      _apiClient.locale = code;
-      notifyListeners();
+    } else {
+      // First run: follow the device's preferred language, falling back to
+      // Polish for anything the app doesn't ship. Persist the decision so
+      // background prayer-time refreshes (which cannot read device locale)
+      // see the same language.
+      _locale = _resolveDeviceLocale();
+      await prefs.setString(_key, _locale.languageCode);
     }
+    _apiClient.locale = _locale.languageCode;
+    notifyListeners();
+  }
+
+  Locale _resolveDeviceLocale() {
+    for (final deviceLocale in PlatformDispatcher.instance.locales) {
+      for (final candidate in supported) {
+        if (candidate.languageCode == deviceLocale.languageCode) {
+          return candidate;
+        }
+      }
+    }
+    return _fallback;
   }
 
   Future<void> setLocale(Locale locale) async {

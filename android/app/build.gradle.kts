@@ -15,9 +15,13 @@ val keystorePropertiesFile = rootProject.file("key.properties")
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
+val keystoreFile = keystoreProperties["storeFile"]?.let { file(it) }
+val realReleaseSigningAvailable = !localTestSigning &&
+    keystorePropertiesFile.exists() &&
+    keystoreFile?.exists() == true
 
 android {
-    namespace = "com.example.ckikatowice"
+    namespace = "pl.ckikatowice.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -48,7 +52,12 @@ android {
 
     buildTypes {
         release {
-            signingConfig = if (!localTestSigning && keystorePropertiesFile.exists()) {
+            // AGP configures every build type at configuration time regardless
+            // of which variant is actually being assembled (e.g. `assembleDebug`
+            // still evaluates this block), so falling back to the debug config
+            // here must not fail the build outright. The real, loud failure is
+            // registered below and only fires when a release task actually runs.
+            signingConfig = if (realReleaseSigningAvailable) {
                 signingConfigs.getByName("release")
             } else {
                 signingConfigs.getByName("debug")
@@ -58,6 +67,23 @@ android {
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
+            )
+        }
+    }
+}
+
+if (!realReleaseSigningAvailable && !localTestSigning) {
+    tasks.matching {
+        it.name.startsWith("assembleRelease") ||
+            it.name.startsWith("bundleRelease") ||
+            it.name.startsWith("packageRelease")
+    }.configureEach {
+        doFirst {
+            throw GradleException(
+                "Release build requested without a valid upload keystore. " +
+                    "Create android/key.properties (see key.properties.example) pointing at a " +
+                    "real .jks file, or pass -PlocalTestSigning=true for a local QA build signed " +
+                    "with the debug key."
             )
         }
     }

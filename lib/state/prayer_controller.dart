@@ -33,8 +33,6 @@ class PrayerController extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   DailyPrayers? get day => _day;
-  Duration get remaining => remainingListenable.value;
-  bool get isReady => _day != null;
   bool get hasError => _hasError;
   bool get isLoading => _isLoading;
   DateTime get selectedDate => _selectedDate;
@@ -49,6 +47,7 @@ class PrayerController extends ChangeNotifier with WidgetsBindingObserver {
     _ticker?.cancel();
     _day = null;
     _tomorrow = null;
+    _sortedSlots = null;
     _isLoading = true;
     _hasError = false;
     remainingListenable.value = Duration.zero;
@@ -57,6 +56,7 @@ class PrayerController extends ChangeNotifier with WidgetsBindingObserver {
       final loaded = await _service.forDate(_selectedDate);
       if (_disposed || generation != _generation) return;
       _day = loaded;
+      _sortedSlots = null;
       _isLoading = false;
       _recompute();
       _startTicker();
@@ -77,6 +77,7 @@ class PrayerController extends ChangeNotifier with WidgetsBindingObserver {
       );
       if (_disposed || generation != _generation) return;
       _tomorrow = tomorrow;
+      _sortedSlots = null;
       _recompute();
       notifyListeners();
     } catch (_) {
@@ -84,36 +85,34 @@ class PrayerController extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
+  List<({PrayerSlot slot, DateTime at})>? _sortedSlots;
+
+  /// All notifiable slots for the visible day(s), sorted once per load
+  /// rather than re-sorted every second by the ticker.
+  List<({PrayerSlot slot, DateTime at})> get _allSlots {
+    return _sortedSlots ??= () {
+      final slots = <({PrayerSlot slot, DateTime at})>[];
+      for (final day in [_day, if (isSelectedDateToday) _tomorrow]) {
+        if (day == null) continue;
+        for (final slot in day.notifiable) {
+          slots.add((slot: slot, at: prayerInstant(day.date, slot.time)));
+        }
+      }
+      slots.sort((a, b) => a.at.compareTo(b.at));
+      return slots;
+    }();
+  }
+
   ({PrayerSlot slot, DateTime at})? get _next {
     final now = _instant;
-    final candidates = <({PrayerSlot slot, DateTime at})>[];
-    for (final day in [_day, if (isSelectedDateToday) _tomorrow]) {
-      if (day == null) continue;
-      for (final slot in day.notifiable) {
-        final at = prayerInstant(day.date, slot.time);
-        if (at.isAfter(now)) candidates.add((slot: slot, at: at));
-      }
+    for (final entry in _allSlots) {
+      if (entry.at.isAfter(now)) return entry;
     }
-    candidates.sort((a, b) => a.at.compareTo(b.at));
-    return candidates.isEmpty ? null : candidates.first;
+    return null;
   }
 
   PrayerSlot? get nextPrayer => _next?.slot;
   DateTime? get nextPrayerAt => _next?.at;
-  PrayerSlot? get currentPrayer {
-    final day = _day;
-    if (day == null || !isSelectedDateToday) return null;
-    PrayerSlot? current;
-    DateTime? latest;
-    for (final slot in day.notifiable) {
-      final at = prayerInstant(day.date, slot.time);
-      if (!at.isAfter(_instant) && (latest == null || at.isAfter(latest))) {
-        latest = at;
-        current = slot;
-      }
-    }
-    return current;
-  }
 
   void _startTicker() {
     _ticker?.cancel();

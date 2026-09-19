@@ -20,6 +20,7 @@ import '../../shared/widgets/app_background.dart';
 import '../../shared/widgets/app_header.dart';
 import '../../shared/widgets/section_header.dart';
 import 'widgets/about_section.dart';
+import 'widgets/reliable_adhan_card.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -133,6 +134,8 @@ class SettingsScreen extends StatelessWidget {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 28),
+                  ReliableAdhanCard(notif: notif),
                   const SizedBox(height: 28),
                   SectionHeader(title: l10n.quickActions),
                   const SizedBox(height: 12),
@@ -279,10 +282,7 @@ class _NotificationActionsState extends State<_NotificationActions> {
             TextButton.icon(
               onPressed: status.syncState == PrayerNotificationSyncState.syncing
                   ? null
-                  : () => notif.synchronize(
-                      requestPermissions: true,
-                      force: true,
-                    ),
+                  : () => notif.synchronize(requestPermissions: true),
               icon: const Icon(Icons.refresh),
               label: Text(l10n.refreshReminders),
             ),

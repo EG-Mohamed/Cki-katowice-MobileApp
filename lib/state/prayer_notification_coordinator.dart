@@ -25,6 +25,8 @@ class PrayerNotificationCoordinator extends ChangeNotifier
     DateTime Function()? now,
     Future<void> Function(bool)? configureBackground,
   }) : _gateway = gateway,
+       _localeCode = localeCode,
+       _now = now ?? DateTime.now,
        _configureBackground =
            configureBackground ?? BackgroundPrayers.configure,
        _scheduler = PrayerScheduler(
@@ -37,6 +39,8 @@ class PrayerNotificationCoordinator extends ChangeNotifier
   final NotificationController _preferences;
   final NotificationGateway _gateway;
   final PrayerScheduler _scheduler;
+  final String Function() _localeCode;
+  final DateTime Function() _now;
   final Future<void> Function(bool) _configureBackground;
   PrayerNotificationStatus _status = const PrayerNotificationStatus();
   Future<void>? _activeSync;
@@ -44,10 +48,10 @@ class PrayerNotificationCoordinator extends ChangeNotifier
   bool _started = false;
   bool _disposed = false;
   bool _requestQueued = false;
-  bool _forceQueued = false;
   Timer? _retry;
+  Timer? _midnightTimer;
+  StreamSubscription<String>? _tapSubscription;
   int _attempt = 0;
-
   PrayerNotificationStatus get status => _status;
   Set<PrayerName> get enabled => _preferences.enabled;
   bool get allEnabled => _preferences.allEnabled;
@@ -57,17 +61,57 @@ class PrayerNotificationCoordinator extends ChangeNotifier
     if (_started || _disposed) return;
     _started = true;
     WidgetsBinding.instance.addObserver(this);
-    await synchronize(requestPermissions: true, force: true);
+    _tapSubscription = _gateway.tappedPayloads.listen(_onNotificationPayload);
+    unawaited(
+      _gateway.consumeLaunchPayload().then((payload) {
+        if (payload != null) _onNotificationPayload(payload);
+      }),
+    );
+    _scheduleMidnightRollover();
+    await synchronize(requestPermissions: true);
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      // A resume always re-syncs: Android's pending-notifications list is
+      // plugin-side persistence, not an AlarmManager query, so it can't be
+      // trusted as evidence that nothing needs repair after an OEM battery
+      // manager purges alarms. The scheduler itself only rewrites alarms
+      // whose payload has actually changed or gone missing, so this is
+      // cheap on the common case where nothing was purged. A resume also
+      // gets a fresh shot at retrying if the last attempt gave up
+      // permanently.
+      _resetRetry();
       unawaited(synchronize());
+      _scheduleMidnightRollover();
     } else {
       _retry?.cancel();
       _retry = null;
+      _midnightTimer?.cancel();
+      _midnightTimer = null;
     }
+  }
+
+  void _onNotificationPayload(String payload) {
+    // Tapping the "your schedule is running out" reminder should trigger an
+    // immediate repair rather than silently doing nothing.
+    if (payload.startsWith('coverage')) {
+      unawaited(synchronize());
+    }
+  }
+
+  void _scheduleMidnightRollover() {
+    _midnightTimer?.cancel();
+    final now = _now();
+    final nextMidnight = DateTime(now.year, now.month, now.day + 1);
+    final delay = nextMidnight.difference(now) + const Duration(seconds: 2);
+    _midnightTimer = Timer(delay, () {
+      // A device left open overnight would otherwise keep a scheduling
+      // window that shifted a day without ever re-syncing.
+      unawaited(synchronize());
+      _scheduleMidnightRollover();
+    });
   }
 
   Future<void> togglePrayer(PrayerName name) =>
@@ -76,6 +120,7 @@ class PrayerNotificationCoordinator extends ChangeNotifier
     await _scheduler.lock.run(() => _preferences.setEnabled(name, value));
     if (_disposed) return;
     notifyListeners();
+    _resetRetry();
     await synchronize(requestPermissions: value);
   }
 
@@ -83,16 +128,37 @@ class PrayerNotificationCoordinator extends ChangeNotifier
     await _scheduler.lock.run(() => _preferences.setAll(value));
     if (_disposed) return;
     notifyListeners();
+    _resetRetry();
     await synchronize(requestPermissions: value);
   }
 
   Future<void> requestExactAlarmAccess() async {
+    _resetRetry();
     try {
       await _gateway.requestExactAlarmPermission();
-      await synchronize(force: true);
+      await synchronize();
     } catch (e) {
       _failed(e);
     }
+  }
+
+  Future<bool> isIgnoringBatteryOptimizations() =>
+      _gateway.isIgnoringBatteryOptimizations();
+
+  Future<void> requestIgnoreBatteryOptimizations() async {
+    _resetRetry();
+    try {
+      await _gateway.requestIgnoreBatteryOptimizations();
+      await synchronize();
+    } catch (e) {
+      _failed(e);
+    }
+  }
+
+  void _resetRetry() {
+    _attempt = 0;
+    _retry?.cancel();
+    _retry = null;
   }
 
   Future<bool> scheduleLockScreenTest({
@@ -121,13 +187,9 @@ class PrayerNotificationCoordinator extends ChangeNotifier
     }
   }
 
-  Future<void> synchronize({
-    bool requestPermissions = false,
-    bool force = false,
-  }) {
+  Future<void> synchronize({bool requestPermissions = false}) {
     if (_disposed) return Future.value();
     _requestQueued |= requestPermissions;
-    _forceQueued |= force;
     if (_activeSync != null) {
       _again = true;
       return _activeSync!;
@@ -138,8 +200,6 @@ class PrayerNotificationCoordinator extends ChangeNotifier
       do {
         _again = false;
         final request = _requestQueued;
-        final repair = _forceQueued;
-        _forceQueued = false;
         _requestQueued = false;
         _update(
           _status.copyWith(
@@ -150,6 +210,7 @@ class PrayerNotificationCoordinator extends ChangeNotifier
         try {
           await _gateway.init();
           await _preferences.load();
+          await _persistLocale();
           if (request && enabled.isNotEmpty) {
             if (!await _gateway.notificationsEnabled()) {
               await _gateway.requestNotificationPermission();
@@ -157,12 +218,7 @@ class PrayerNotificationCoordinator extends ChangeNotifier
             if (_gateway.isAndroid &&
                 await _gateway.notificationsEnabled() &&
                 !await _gateway.canScheduleExactAlarms()) {
-              final prefs = await SharedPreferences.getInstance();
-              if (!(prefs.getBool('prayer_notification_exact_asked') ??
-                  false)) {
-                await prefs.setBool('prayer_notification_exact_asked', true);
-                await _gateway.requestExactAlarmPermission();
-              }
+              await _gateway.requestExactAlarmPermission();
             }
           }
           Object? registrationError;
@@ -171,16 +227,14 @@ class PrayerNotificationCoordinator extends ChangeNotifier
           } catch (e) {
             registrationError = e;
           }
-          final result = await _scheduler.synchronize(force: repair);
+          final result = await _scheduler.synchronize();
           _update(result);
           if (registrationError != null) _failed(registrationError);
           if (registrationError != null ||
               result.syncState == PrayerNotificationSyncState.failed) {
             _scheduleRetry();
           } else {
-            _attempt = 0;
-            _retry?.cancel();
-            _retry = null;
+            _resetRetry();
           }
         } catch (e) {
           _failed(e);
@@ -192,6 +246,17 @@ class PrayerNotificationCoordinator extends ChangeNotifier
       completer.complete();
     });
     return completer.future;
+  }
+
+  /// Persists the current locale so the scheduler (and the background
+  /// isolate, which cannot read app state) always have a value to read,
+  /// instead of silently falling back to English.
+  Future<void> _persistLocale() async {
+    final prefs = await SharedPreferences.getInstance();
+    final code = _localeCode();
+    if (['en', 'pl', 'ar'].contains(code)) {
+      await prefs.setString('app_locale', code);
+    }
   }
 
   void _failed(Object error) => _update(
@@ -228,6 +293,8 @@ class PrayerNotificationCoordinator extends ChangeNotifier
   void dispose() {
     _disposed = true;
     _retry?.cancel();
+    _midnightTimer?.cancel();
+    unawaited(_tapSubscription?.cancel());
     if (_started) WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }

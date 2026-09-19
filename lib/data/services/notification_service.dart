@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:permission_handler/permission_handler.dart' as ph;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../../core/utils/prayer_time.dart' as prayer_time;
@@ -14,6 +17,8 @@ abstract class NotificationGateway {
   Future<bool> requestNotificationPermission();
   Future<bool> canScheduleExactAlarms();
   Future<bool> requestExactAlarmPermission();
+  Future<bool> isIgnoringBatteryOptimizations();
+  Future<void> requestIgnoreBatteryOptimizations();
   Future<List<PendingNotificationRequest>> pendingRequests();
   Future<void> schedule({
     required int id,
@@ -31,18 +36,31 @@ abstract class NotificationGateway {
     required String body,
     required String payload,
   });
+
+  /// A payload from a tapped notification, or one the app was launched from.
+  /// Consumed once; the same payload is not returned twice.
+  Stream<String> get tappedPayloads;
+  Future<String?> consumeLaunchPayload();
 }
 
 class NotificationService implements NotificationGateway {
   NotificationService({FlutterLocalNotificationsPlugin? plugin})
     : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
 
-  static const String channelId = 'adhan_prayer_times_v2';
+  /// Bumped whenever the channel's sound/importance/behaviour changes:
+  /// Android freezes those settings on the first create, so an old
+  /// installation only picks up a fix if we create a new channel id and
+  /// drop the previous one.
+  static const String channelId = 'adhan_prayer_times_v3';
+  static const List<String> _staleChannelIds = ['adhan_prayer_times_v2'];
+  static const String coverageChannelId = 'schedule_status_v2';
   static const String payloadPrefix = 'prayer:';
   static const int testNotificationId = 9999;
 
   final FlutterLocalNotificationsPlugin _plugin;
   Future<void>? _initializing;
+  final _tappedPayloads = StreamController<String>.broadcast();
+  bool _launchPayloadConsumed = false;
 
   @override
   bool get isAndroid =>
@@ -53,6 +71,9 @@ class NotificationService implements NotificationGateway {
 
   @override
   tz.Location get prayerLocation => prayer_time.prayerLocation;
+
+  @override
+  Stream<String> get tappedPayloads => _tappedPayloads.stream;
 
   NotificationDetails get _details => const NotificationDetails(
     android: AndroidNotificationDetails(
@@ -76,6 +97,16 @@ class NotificationService implements NotificationGateway {
     ),
   );
 
+  NotificationDetails get _coverageDetails => const NotificationDetails(
+    android: AndroidNotificationDetails(
+      coverageChannelId,
+      'Prayer schedule status',
+      channelDescription: 'Warns when scheduled prayer reminders are running out',
+      importance: Importance.defaultImportance,
+    ),
+    iOS: DarwinNotificationDetails(presentAlert: true, presentSound: false),
+  );
+
   @override
   Future<void> init() =>
       _initializing ??= _initialize().catchError((Object error) {
@@ -93,12 +124,25 @@ class NotificationService implements NotificationGateway {
         requestSoundPermission: false,
       ),
     );
-    await _plugin.initialize(settings: initialization);
-    await _createChannel();
+    await _plugin.initialize(
+      settings: initialization,
+      onDidReceiveNotificationResponse: _onResponse,
+    );
+    await _createChannels();
   }
 
-  Future<void> _createChannel() async {
+  void _onResponse(NotificationResponse response) {
+    final payload = response.payload;
+    if (payload != null && payload.isNotEmpty) {
+      _tappedPayloads.add(payload);
+    }
+  }
+
+  Future<void> _createChannels() async {
     if (!isAndroid) return;
+    for (final staleId in _staleChannelIds) {
+      await _android?.deleteNotificationChannel(channelId: staleId);
+    }
     await _android?.createNotificationChannel(
       const AndroidNotificationChannel(
         channelId,
@@ -108,6 +152,15 @@ class NotificationService implements NotificationGateway {
         playSound: true,
         sound: RawResourceAndroidNotificationSound('adhan'),
         audioAttributesUsage: AudioAttributesUsage.alarm,
+      ),
+    );
+    await _android?.createNotificationChannel(
+      const AndroidNotificationChannel(
+        coverageChannelId,
+        'Prayer schedule status',
+        description:
+            'Warns when scheduled prayer reminders are running out',
+        importance: Importance.defaultImportance,
       ),
     );
   }
@@ -171,6 +224,18 @@ class NotificationService implements NotificationGateway {
   }
 
   @override
+  Future<bool> isIgnoringBatteryOptimizations() async {
+    if (!isAndroid) return true;
+    return await ph.Permission.ignoreBatteryOptimizations.isGranted;
+  }
+
+  @override
+  Future<void> requestIgnoreBatteryOptimizations() async {
+    if (!isAndroid) return;
+    await ph.Permission.ignoreBatteryOptimizations.request();
+  }
+
+  @override
   Future<List<PendingNotificationRequest>> pendingRequests() async {
     await init();
     return _plugin.pendingNotificationRequests();
@@ -189,17 +254,8 @@ class NotificationService implements NotificationGateway {
     await _plugin.zonedSchedule(
       id: id,
       scheduledDate: when,
-      notificationDetails: payload.startsWith('coverage:')
-          ? const NotificationDetails(
-              android: AndroidNotificationDetails(
-                'schedule_status',
-                'Prayer schedule status',
-              ),
-              iOS: DarwinNotificationDetails(
-                presentAlert: true,
-                presentSound: false,
-              ),
-            )
+      notificationDetails: payload.startsWith('coverage')
+          ? _coverageDetails
           : _details,
       androidScheduleMode: exact
           ? AndroidScheduleMode.exactAllowWhileIdle
@@ -251,5 +307,15 @@ class NotificationService implements NotificationGateway {
       payload: 'test:lock-screen',
       exact: exact,
     );
+  }
+
+  @override
+  Future<String?> consumeLaunchPayload() async {
+    if (_launchPayloadConsumed) return null;
+    _launchPayloadConsumed = true;
+    await init();
+    final details = await _plugin.getNotificationAppLaunchDetails();
+    if (details?.didNotificationLaunchApp != true) return null;
+    return details?.notificationResponse?.payload;
   }
 }

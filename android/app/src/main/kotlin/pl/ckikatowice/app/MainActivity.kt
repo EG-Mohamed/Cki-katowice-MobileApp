@@ -1,4 +1,4 @@
-package com.example.ckikatowice
+package pl.ckikatowice.app
 
 import com.ryanheise.audioservice.AudioServiceActivity
 
