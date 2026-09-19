@@ -211,6 +211,10 @@ class AppLocalizationsPl extends AppLocalizations {
   String get emptyNews => 'Brak ogłoszeń.';
 
   @override
+  String get newsLoadFailed =>
+      'Nie udało się wczytać wiadomości. Sprawdź połączenie i spróbuj ponownie.';
+
+  @override
   String get emptyKhutba => 'Brak opublikowanej chutby.';
 
   @override
@@ -400,6 +404,38 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get notificationReliabilityHelp =>
       'Przypomnienia są zaplanowane w telefonie. Odświeżanie w tle przedłuża harmonogram, gdy system na to pozwala. Jeśli alerty są opóźnione, sprawdź ustawienia powiadomień i baterii.';
+
+  @override
+  String get reliableAdhanTitle => 'Niezawodny Azan';
+
+  @override
+  String get reliableAdhanDesc =>
+      'Aby Azan docierał na czas nawet przy zamkniętej aplikacji, zezwól jej na ignorowanie optymalizacji baterii.';
+
+  @override
+  String get batteryOptimizationOn =>
+      'Optymalizacja baterii może opóźniać Azan na tym urządzeniu.';
+
+  @override
+  String get batteryOptimizationOff =>
+      'Optymalizacja baterii jest wyłączona — dostarczanie jest niezawodne.';
+
+  @override
+  String get batteryOptimizationFix => 'Zezwól w tle';
+
+  @override
+  String get exactAlarmOn => 'Dokładne wyzwalanie alarmów jest włączone.';
+
+  @override
+  String get exactAlarmOff =>
+      'Dostęp do dokładnych alarmów jest wyłączony — przypomnienia mogą się opóźniać.';
+
+  @override
+  String get exactAlarmFix => 'Przyznaj dostęp do dokładnych alarmów';
+
+  @override
+  String get oemAutostartHint =>
+      'Na niektórych telefonach (Xiaomi, Samsung, Huawei, Oppo) może być również konieczne włączenie „Autostartu” lub usunięcie CKI Katowice z ograniczeń baterii w ustawieniach telefonu.';
 
   @override
   String get qiblaLocationFailed =>

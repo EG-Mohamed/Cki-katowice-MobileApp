@@ -211,6 +211,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get emptyNews => 'No announcements yet.';
 
   @override
+  String get newsLoadFailed =>
+      'News could not be loaded. Check your connection and try again.';
+
+  @override
   String get emptyKhutba => 'No Khutba published yet.';
 
   @override
@@ -399,6 +403,38 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get notificationReliabilityHelp =>
       'Prayer reminders are scheduled on your phone. Background refresh extends coverage when the system allows it. Check notification and battery settings if alerts are delayed.';
+
+  @override
+  String get reliableAdhanTitle => 'Reliable Adhan';
+
+  @override
+  String get reliableAdhanDesc =>
+      'For Adhan to arrive on time even when the app is closed, allow it to ignore battery optimisation.';
+
+  @override
+  String get batteryOptimizationOn =>
+      'Battery optimisation may delay the Adhan on this device.';
+
+  @override
+  String get batteryOptimizationOff =>
+      'Battery optimisation is disabled for reliable delivery.';
+
+  @override
+  String get batteryOptimizationFix => 'Allow in background';
+
+  @override
+  String get exactAlarmOn => 'Exact alarm timing is enabled.';
+
+  @override
+  String get exactAlarmOff =>
+      'Exact alarm access is off — reminders may arrive late.';
+
+  @override
+  String get exactAlarmFix => 'Grant exact alarm access';
+
+  @override
+  String get oemAutostartHint =>
+      'On some phones (Xiaomi, Samsung, Huawei, Oppo) you may also need to enable \"Autostart\" or remove CKI Katowice from battery restrictions in your phone\'s settings app.';
 
   @override
   String get qiblaLocationFailed =>

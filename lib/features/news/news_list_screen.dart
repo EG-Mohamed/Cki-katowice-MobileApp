@@ -188,9 +188,20 @@ class _NewsListScreenState extends State<NewsListScreen> {
               else if (_hasError && _items.isEmpty)
                 SliverFillRemaining(
                   child: Center(
-                    child: Text(
-                      l10n.emptyNews,
-                      style: TextStyle(color: BrandColors.textMuted),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          l10n.newsLoadFailed,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: BrandColors.textMuted),
+                        ),
+                        const SizedBox(height: 12),
+                        OutlinedButton(
+                          onPressed: _refresh,
+                          child: Text(l10n.retryAction),
+                        ),
+                      ],
                     ),
                   ),
                 )

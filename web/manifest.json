@@ -1,11 +1,11 @@
 {
-    "name": "ckikatowice",
-    "short_name": "ckikatowice",
+    "name": "CKI Katowice",
+    "short_name": "CKI Katowice",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#0B7A54",
+    "theme_color": "#0B7A54",
+    "description": "CKI Katowice mosque app — prayer times, Qibla, Quran, news and Khutba.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

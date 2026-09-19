@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/brand_colors.dart';
+import '../../state/locale_controller.dart';
 import '../../state/theme_controller.dart';
 
 class SplashGate extends StatefulWidget {
@@ -31,8 +32,9 @@ class _SplashGateState extends State<SplashGate> {
   @override
   Widget build(BuildContext context) {
     if (_done) return widget.child;
+    final isRtl = context.watch<LocaleController>().isRtl;
     return Directionality(
-      textDirection: TextDirection.ltr,
+      textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
       child: Stack(
         children: [
           widget.child,

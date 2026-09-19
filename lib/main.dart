@@ -33,9 +33,9 @@ Future<void> main() async {
   final localeController = LocaleController(apiClient);
   final notificationController = NotificationController();
   final themeController = ThemeController();
-  final announcementController = AnnouncementController(
-    ApiAnnouncementService(apiClient),
-  );
+  final announcementService = ApiAnnouncementService(apiClient);
+  final settingsService = ApiSettingsService(apiClient);
+  final announcementController = AnnouncementController(announcementService);
   final quranPlayerController = QuranPlayerController(
     () => AudioService.init(
       builder: () => QuranAudioHandler(),
@@ -68,7 +68,7 @@ Future<void> main() async {
   );
   unawaited(announcementController.load());
 
-  final settingsController = SettingsController(ApiSettingsService(apiClient));
+  final settingsController = SettingsController(settingsService);
   unawaited(settingsController.load());
 
   localeController.addListener(() {
@@ -88,17 +88,11 @@ Future<void> main() async {
         ChangeNotifierProvider.value(value: announcementController),
         ChangeNotifierProvider.value(value: quranPlayerController),
         ChangeNotifierProvider.value(value: settingsController),
-        Provider<ApiClient>.value(value: apiClient),
         Provider<NewsService>(create: (_) => ApiNewsService(apiClient)),
         Provider<KhutbaService>(create: (_) => ApiKhutbaService(apiClient)),
         Provider<QuranService>(create: (_) => ApiQuranService()),
         Provider<Mp3QuranService>(create: (_) => ApiMp3QuranService()),
-        Provider<AnnouncementService>(
-          create: (_) => ApiAnnouncementService(apiClient),
-        ),
-        Provider<SettingsService>(create: (_) => ApiSettingsService(apiClient)),
         Provider<QiblaService>(create: (_) => QiblaService()),
-        Provider<NotificationService>.value(value: notificationService),
       ],
       child: SplashGate(ready: firstPrayerLoad, child: const CkiApp()),
     ),

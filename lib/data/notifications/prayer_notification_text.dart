@@ -1,45 +1,15 @@
+import 'package:flutter/material.dart';
+
+import '../../core/localization/arb/app_localizations.dart';
+import '../../core/utils/prayer_labels.dart';
 import '../models/prayer.dart';
 
 String prayerNotificationTitle(String locale, PrayerName name) {
-  final prayer = _prayerName(locale, name);
-  return switch (locale) {
-    'ar' => 'صلاة $prayer',
-    'pl' => 'Modlitwa $prayer',
-    _ => '$prayer prayer',
-  };
+  final l10n = lookupAppLocalizations(Locale(locale));
+  return l10n.notificationTitle;
 }
 
-String prayerNotificationBody(String locale) {
-  return switch (locale) {
-    'ar' => 'حان وقت الصلاة • CKI Katowice',
-    'pl' => 'Nadszedł czas modlitwy • CKI Katowice',
-    _ => 'It’s time to pray • CKI Katowice',
-  };
-}
-
-String _prayerName(String locale, PrayerName name) {
-  return switch (locale) {
-    'ar' => switch (name) {
-      PrayerName.fajr => 'الفجر',
-      PrayerName.sunrise => 'الشروق',
-      PrayerName.dhuhr => 'الظهر',
-      PrayerName.asr => 'العصر',
-      PrayerName.maghrib => 'المغرب',
-      PrayerName.isha => 'العشاء',
-      PrayerName.jumuah => 'الجمعة',
-    },
-    'pl' => switch (name) {
-      PrayerName.fajr => 'Fadżr',
-      PrayerName.sunrise => 'Wschód słońca',
-      PrayerName.dhuhr => 'Dhuhr',
-      PrayerName.asr => 'Asr',
-      PrayerName.maghrib => 'Maghrib',
-      PrayerName.isha => 'Isza',
-      PrayerName.jumuah => 'Dżumu\'a',
-    },
-    _ =>
-      name == PrayerName.jumuah
-          ? 'Jumu\'ah'
-          : name.name[0].toUpperCase() + name.name.substring(1),
-  };
+String prayerNotificationBody(String locale, PrayerName name) {
+  final l10n = lookupAppLocalizations(Locale(locale));
+  return l10n.notificationBody(prayerLabel(l10n, name));
 }

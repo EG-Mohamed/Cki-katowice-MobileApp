@@ -478,6 +478,12 @@ abstract class AppLocalizations {
   /// **'No announcements yet.'**
   String get emptyNews;
 
+  /// No description provided for @newsLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'News could not be loaded. Check your connection and try again.'**
+  String get newsLoadFailed;
+
   /// No description provided for @emptyKhutba.
   ///
   /// In en, this message translates to:
@@ -819,6 +825,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Prayer reminders are scheduled on your phone. Background refresh extends coverage when the system allows it. Check notification and battery settings if alerts are delayed.'**
   String get notificationReliabilityHelp;
+
+  /// No description provided for @reliableAdhanTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reliable Adhan'**
+  String get reliableAdhanTitle;
+
+  /// No description provided for @reliableAdhanDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'For Adhan to arrive on time even when the app is closed, allow it to ignore battery optimisation.'**
+  String get reliableAdhanDesc;
+
+  /// No description provided for @batteryOptimizationOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Battery optimisation may delay the Adhan on this device.'**
+  String get batteryOptimizationOn;
+
+  /// No description provided for @batteryOptimizationOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Battery optimisation is disabled for reliable delivery.'**
+  String get batteryOptimizationOff;
+
+  /// No description provided for @batteryOptimizationFix.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow in background'**
+  String get batteryOptimizationFix;
+
+  /// No description provided for @exactAlarmOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Exact alarm timing is enabled.'**
+  String get exactAlarmOn;
+
+  /// No description provided for @exactAlarmOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Exact alarm access is off — reminders may arrive late.'**
+  String get exactAlarmOff;
+
+  /// No description provided for @exactAlarmFix.
+  ///
+  /// In en, this message translates to:
+  /// **'Grant exact alarm access'**
+  String get exactAlarmFix;
+
+  /// No description provided for @oemAutostartHint.
+  ///
+  /// In en, this message translates to:
+  /// **'On some phones (Xiaomi, Samsung, Huawei, Oppo) you may also need to enable \"Autostart\" or remove CKI Katowice from battery restrictions in your phone\'s settings app.'**
+  String get oemAutostartHint;
 
   /// No description provided for @qiblaLocationFailed.
   ///

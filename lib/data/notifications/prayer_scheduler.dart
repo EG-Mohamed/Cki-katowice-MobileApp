@@ -31,8 +31,22 @@ class PrayerScheduler {
   static const metadataKey = 'prayer_schedule_status_v2';
   static const reminderId = 9998;
 
+  /// Android alarms are plugin-side persistence and are lost if an OEM
+  /// battery manager or Doze purges them; a wide horizon means a user who
+  /// never reopens the app still gets correct Adhans for a month. iOS caps
+  /// pending local notifications at 64, so it keeps a shorter window.
+  static const int _androidHorizonDays = 29;
+  static const int _iosHorizonDays = 11;
+  int get _horizonDays => gateway.isIOS ? _iosHorizonDays : _androidHorizonDays;
+
   Future<PrayerNotificationStatus> synchronize({bool force = false}) async {
     await gateway.init();
+    // A single timestamp drives both the fetch window and the scheduling
+    // window below. Taking it once (rather than once outside the lock and
+    // again after acquiring it) means a midnight rollover that happens while
+    // waiting for the lock can no longer make the fetched range fall short
+    // of the scheduling range and produce a spurious "missing dates" failure.
+    final anchor = _now();
     // Fetch outside the lock so slow/offline networking cannot block a mute.
     // Preferences are read again under the lock before any notification writes.
     final hintPrefs = await SharedPreferences.getInstance();
@@ -42,13 +56,9 @@ class PrayerScheduler {
     if (hintPrefs.getStringList(NotificationController.storageKey)?.isEmpty !=
             true &&
         await gateway.notificationsEnabled()) {
-      final instant = tz.TZDateTime.from(_now(), gateway.prayerLocation);
+      final instant = tz.TZDateTime.from(anchor, gateway.prayerLocation);
       final from = DateTime(instant.year, instant.month, instant.day);
-      final to = DateTime(
-        from.year,
-        from.month,
-        from.day + (gateway.isIOS ? 11 : 6),
-      );
+      final to = DateTime(from.year, from.month, from.day + _horizonDays);
       try {
         fetchedDays = await prayerService.range(from: from, to: to);
       } catch (e) {
@@ -68,23 +78,10 @@ class PrayerScheduler {
       final locale = ['en', 'pl', 'ar'].contains(storedLocale)
           ? storedLocale!
           : 'en';
-      final now = tz.TZDateTime.from(_now(), gateway.prayerLocation);
-      final horizon = DateTime(
-        now.year,
-        now.month,
-        now.day + (gateway.isIOS ? 11 : 6),
-      );
+      final now = tz.TZDateTime.from(anchor, gateway.prayerLocation);
+      final horizon = DateTime(now.year, now.month, now.day + _horizonDays);
       var exact = await gateway.canScheduleExactAlarms();
       var pending = await gateway.pendingRequests();
-      DateTime? lastRefresh;
-      try {
-        final metadata =
-            jsonDecode(prefs.getString(metadataKey) ?? '{}')
-                as Map<String, dynamic>;
-        lastRefresh = DateTime.tryParse(
-          metadata['lastRefresh'] as String? ?? '',
-        );
-      } catch (_) {}
       DateTime? coverage;
       String? error;
       final permission = await gateway.notificationsEnabled();
@@ -107,11 +104,7 @@ class PrayerScheduler {
           await gateway.cancel(reminderId);
         } else if (permission) {
           final from = DateTime(now.year, now.month, now.day);
-          final to = DateTime(
-            from.year,
-            from.month,
-            from.day + (gateway.isIOS ? 11 : 6),
-          );
+          final to = DateTime(from.year, from.month, from.day + _horizonDays);
           if (fetchError != null) throw fetchError;
           final byDate = {for (final day in fetchedDays) _date(day.date): day};
           if (byDate.isEmpty) throw StateError('No prayer times available');
@@ -205,39 +198,48 @@ class PrayerScheduler {
           final verified = {
             for (final p in await gateway.pendingRequests()) p.id: p,
           };
-          if (desired.values.any((a) => verified[a.id]?.payload != a.payload)) {
+          final unverifiable = desired.values.where((a) {
+            final match = verified[a.id];
+            if (match?.payload == a.payload) return false;
+            // An alarm whose time has already passed between the write and
+            // this verification legitimately fired and is gone from the
+            // pending list; that is not a registration failure.
+            return a.when.isAfter(tz.TZDateTime.from(_now(), gateway.prayerLocation));
+          });
+          if (unverifiable.isNotEmpty) {
             throw StateError('Notification registration could not be verified');
           }
           coverage = completeThrough;
-          if (gateway.isIOS) {
-            final l10n = lookupAppLocalizations(Locale(locale));
-            final through = coverage;
-            if (through != null) {
-              final expires = tz.TZDateTime(
-                gateway.prayerLocation,
-                through.year,
-                through.month,
-                through.day + 1,
+          // The coverage-expiry reminder runs on both platforms: Android's
+          // wider window still ends eventually, and Android background
+          // refresh is the least reliable of the two, so it needs the
+          // backstop warning at least as much as iOS does.
+          final l10n = lookupAppLocalizations(Locale(locale));
+          final through = coverage;
+          if (through != null) {
+            final expires = tz.TZDateTime(
+              gateway.prayerLocation,
+              through.year,
+              through.month,
+              through.day + 1,
+            );
+            final reminder = expires.subtract(const Duration(hours: 24));
+            final when = reminder.isAfter(now)
+                ? reminder
+                : now.add(const Duration(minutes: 1));
+            final payload = 'coverage|${expires.toUtc().toIso8601String()}|$locale';
+            if (verified[reminderId]?.payload != payload) {
+              await gateway.schedule(
+                id: reminderId,
+                when: when,
+                title: l10n.notificationCoverageTitle,
+                body: l10n.notificationCoverageBody,
+                payload: payload,
+                exact: false,
               );
-              final reminder = expires.subtract(const Duration(hours: 24));
-              final when = reminder.isAfter(now)
-                  ? reminder
-                  : now.add(const Duration(minutes: 1));
-              final payload =
-                  'coverage:${expires.toUtc().toIso8601String()}:$locale';
-              if (verified[reminderId]?.payload != payload) {
-                await gateway.schedule(
-                  id: reminderId,
-                  when: when,
-                  title: l10n.notificationCoverageTitle,
-                  body: l10n.notificationCoverageBody,
-                  payload: payload,
-                  exact: false,
-                );
-              }
-            } else {
-              await gateway.cancel(reminderId);
             }
+          } else {
+            await gateway.cancel(reminderId);
           }
         }
       } catch (e) {
@@ -261,7 +263,10 @@ class PrayerScheduler {
         scheduledCount: future.length,
         scheduledThrough: coverage,
         nextNotification: times.isEmpty ? null : times.first,
-        lastRefresh: error == null && permission ? now.toUtc() : lastRefresh,
+        // Record that a sync ran even when notifications are off or a step
+        // failed, so the UI never shows a stale timestamp from before the
+        // system stopped working.
+        lastRefresh: now.toUtc(),
         lastError: error,
       );
       await prefs.setString(
@@ -282,7 +287,7 @@ class PrayerScheduler {
     id: a.id,
     when: a.when,
     title: prayerNotificationTitle(a.locale, a.name),
-    body: prayerNotificationBody(a.locale),
+    body: prayerNotificationBody(a.locale, a.name),
     payload: a.payload,
     exact: a.exact,
   );

@@ -210,6 +210,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get emptyNews => 'لا توجد إعلانات بعد.';
 
   @override
+  String get newsLoadFailed =>
+      'تعذّر تحميل الأخبار. تحقق من الاتصال وحاول مجدداً.';
+
+  @override
   String get emptyKhutba => 'لم تُنشر خطبة بعد.';
 
   @override
@@ -396,6 +400,37 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get notificationReliabilityHelp =>
       'تتم جدولة التنبيهات على هاتفك. يمدد التحديث في الخلفية الجدول عندما يسمح النظام بذلك. تحقق من إعدادات الإشعارات والبطارية إذا تأخرت التنبيهات.';
+
+  @override
+  String get reliableAdhanTitle => 'أذان موثوق';
+
+  @override
+  String get reliableAdhanDesc =>
+      'لضمان وصول الأذان في وقته حتى عند إغلاق التطبيق، اسمح له بتجاهل توفير البطارية.';
+
+  @override
+  String get batteryOptimizationOn =>
+      'قد يؤدي توفير البطارية إلى تأخير الأذان على هذا الجهاز.';
+
+  @override
+  String get batteryOptimizationOff => 'توفير البطارية معطّل لضمان وصول موثوق.';
+
+  @override
+  String get batteryOptimizationFix => 'السماح بالعمل في الخلفية';
+
+  @override
+  String get exactAlarmOn => 'تفعيل التوقيت الدقيق للتنبيهات.';
+
+  @override
+  String get exactAlarmOff =>
+      'الوصول إلى التنبيهات الدقيقة معطّل — قد تصل التذكيرات متأخرة.';
+
+  @override
+  String get exactAlarmFix => 'منح الوصول للتنبيهات الدقيقة';
+
+  @override
+  String get oemAutostartHint =>
+      'على بعض الهواتف (شاومي، سامسونج، هواوي، أوبو) قد تحتاج أيضًا إلى تفعيل \"التشغيل التلقائي\" أو استثناء تطبيق CKI Katowice من قيود البطارية في إعدادات هاتفك.';
 
   @override
   String get qiblaLocationFailed =>

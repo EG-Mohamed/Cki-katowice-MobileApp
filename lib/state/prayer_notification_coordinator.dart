@@ -25,6 +25,8 @@ class PrayerNotificationCoordinator extends ChangeNotifier
     DateTime Function()? now,
     Future<void> Function(bool)? configureBackground,
   }) : _gateway = gateway,
+       _localeCode = localeCode,
+       _now = now ?? DateTime.now,
        _configureBackground =
            configureBackground ?? BackgroundPrayers.configure,
        _scheduler = PrayerScheduler(
@@ -37,6 +39,8 @@ class PrayerNotificationCoordinator extends ChangeNotifier
   final NotificationController _preferences;
   final NotificationGateway _gateway;
   final PrayerScheduler _scheduler;
+  final String Function() _localeCode;
+  final DateTime Function() _now;
   final Future<void> Function(bool) _configureBackground;
   PrayerNotificationStatus _status = const PrayerNotificationStatus();
   Future<void>? _activeSync;
@@ -46,7 +50,15 @@ class PrayerNotificationCoordinator extends ChangeNotifier
   bool _requestQueued = false;
   bool _forceQueued = false;
   Timer? _retry;
+  Timer? _midnightTimer;
+  StreamSubscription<String>? _tapSubscription;
   int _attempt = 0;
+  DateTime? _lastForcedResync;
+
+  /// Minimum spacing between resume-triggered forced resyncs, so rapidly
+  /// backgrounding/foregrounding the app cannot hammer the platform channel
+  /// and the schedule lock.
+  static const _minForcedResyncGap = Duration(minutes: 2);
 
   PrayerNotificationStatus get status => _status;
   Set<PrayerName> get enabled => _preferences.enabled;
@@ -57,17 +69,62 @@ class PrayerNotificationCoordinator extends ChangeNotifier
     if (_started || _disposed) return;
     _started = true;
     WidgetsBinding.instance.addObserver(this);
+    _tapSubscription = _gateway.tappedPayloads.listen(_onNotificationPayload);
+    unawaited(
+      _gateway.consumeLaunchPayload().then((payload) {
+        if (payload != null) _onNotificationPayload(payload);
+      }),
+    );
+    _scheduleMidnightRollover();
     await synchronize(requestPermissions: true, force: true);
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      unawaited(synchronize());
+      // Android's pending-notifications list is plugin-side persistence, not
+      // an AlarmManager query: after an OEM battery manager purges alarms,
+      // that list still shows them as scheduled, so a non-forced sync would
+      // see "nothing changed" and leave the app silently dead. Forcing here
+      // is what actually repairs a device that stopped notifying while
+      // closed. A resume also gets a fresh shot at retrying if the last
+      // attempt gave up permanently.
+      _attempt = 0;
+      _retry?.cancel();
+      _retry = null;
+      final last = _lastForcedResync;
+      final shouldForce =
+          last == null || _now().difference(last) >= _minForcedResyncGap;
+      if (shouldForce) _lastForcedResync = _now();
+      unawaited(synchronize(force: shouldForce));
+      _scheduleMidnightRollover();
     } else {
       _retry?.cancel();
       _retry = null;
+      _midnightTimer?.cancel();
+      _midnightTimer = null;
     }
+  }
+
+  void _onNotificationPayload(String payload) {
+    // Tapping the "your schedule is running out" reminder should trigger an
+    // immediate repair rather than silently doing nothing.
+    if (payload.startsWith('coverage|') || payload.startsWith('coverage:')) {
+      unawaited(synchronize(force: true));
+    }
+  }
+
+  void _scheduleMidnightRollover() {
+    _midnightTimer?.cancel();
+    final now = _now();
+    final nextMidnight = DateTime(now.year, now.month, now.day + 1);
+    final delay = nextMidnight.difference(now) + const Duration(seconds: 2);
+    _midnightTimer = Timer(delay, () {
+      // A device left open overnight would otherwise keep a scheduling
+      // window that shifted a day without ever re-syncing.
+      unawaited(synchronize(force: true));
+      _scheduleMidnightRollover();
+    });
   }
 
   Future<void> togglePrayer(PrayerName name) =>
@@ -89,6 +146,18 @@ class PrayerNotificationCoordinator extends ChangeNotifier
   Future<void> requestExactAlarmAccess() async {
     try {
       await _gateway.requestExactAlarmPermission();
+      await synchronize(force: true);
+    } catch (e) {
+      _failed(e);
+    }
+  }
+
+  Future<bool> isIgnoringBatteryOptimizations() =>
+      _gateway.isIgnoringBatteryOptimizations();
+
+  Future<void> requestIgnoreBatteryOptimizations() async {
+    try {
+      await _gateway.requestIgnoreBatteryOptimizations();
       await synchronize(force: true);
     } catch (e) {
       _failed(e);
@@ -150,6 +219,7 @@ class PrayerNotificationCoordinator extends ChangeNotifier
         try {
           await _gateway.init();
           await _preferences.load();
+          await _persistLocale();
           if (request && enabled.isNotEmpty) {
             if (!await _gateway.notificationsEnabled()) {
               await _gateway.requestNotificationPermission();
@@ -157,12 +227,7 @@ class PrayerNotificationCoordinator extends ChangeNotifier
             if (_gateway.isAndroid &&
                 await _gateway.notificationsEnabled() &&
                 !await _gateway.canScheduleExactAlarms()) {
-              final prefs = await SharedPreferences.getInstance();
-              if (!(prefs.getBool('prayer_notification_exact_asked') ??
-                  false)) {
-                await prefs.setBool('prayer_notification_exact_asked', true);
-                await _gateway.requestExactAlarmPermission();
-              }
+              await _gateway.requestExactAlarmPermission();
             }
           }
           Object? registrationError;
@@ -192,6 +257,17 @@ class PrayerNotificationCoordinator extends ChangeNotifier
       completer.complete();
     });
     return completer.future;
+  }
+
+  /// Persists the current locale so the scheduler (and the background
+  /// isolate, which cannot read app state) always have a value to read,
+  /// instead of silently falling back to English.
+  Future<void> _persistLocale() async {
+    final prefs = await SharedPreferences.getInstance();
+    final code = _localeCode();
+    if (['en', 'pl', 'ar'].contains(code)) {
+      await prefs.setString('app_locale', code);
+    }
   }
 
   void _failed(Object error) => _update(
@@ -228,6 +304,8 @@ class PrayerNotificationCoordinator extends ChangeNotifier
   void dispose() {
     _disposed = true;
     _retry?.cancel();
+    _midnightTimer?.cancel();
+    unawaited(_tapSubscription?.cancel());
     if (_started) WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
