@@ -36,6 +36,9 @@ class FakeGateway implements NotificationGateway {
   final pending = <int, PendingNotificationRequest>{};
   final times = <int, tz.TZDateTime>{};
   final modes = <int, bool>{};
+  bool ignoringBatteryOptimizations = true;
+  final _tappedPayloads = StreamController<String>.broadcast();
+  String? launchPayload;
   @override
   bool get isAndroid => !isIOS;
   @override
@@ -50,6 +53,23 @@ class FakeGateway implements NotificationGateway {
   Future<bool> canScheduleExactAlarms() async => exact;
   @override
   Future<bool> requestExactAlarmPermission() async => exact;
+  @override
+  Future<bool> isIgnoringBatteryOptimizations() async =>
+      ignoringBatteryOptimizations;
+  @override
+  Future<void> requestIgnoreBatteryOptimizations() async {
+    ignoringBatteryOptimizations = true;
+  }
+
+  @override
+  Stream<String> get tappedPayloads => _tappedPayloads.stream;
+  @override
+  Future<String?> consumeLaunchPayload() async {
+    final payload = launchPayload;
+    launchPayload = null;
+    return payload;
+  }
+
   @override
   Future<List<PendingNotificationRequest>> pendingRequests() async =>
       pending.values.toList();

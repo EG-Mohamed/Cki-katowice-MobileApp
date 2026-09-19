@@ -89,9 +89,7 @@ class PrayerNotificationCoordinator extends ChangeNotifier
       // is what actually repairs a device that stopped notifying while
       // closed. A resume also gets a fresh shot at retrying if the last
       // attempt gave up permanently.
-      _attempt = 0;
-      _retry?.cancel();
-      _retry = null;
+      _resetRetry();
       final last = _lastForcedResync;
       final shouldForce =
           last == null || _now().difference(last) >= _minForcedResyncGap;
@@ -109,7 +107,7 @@ class PrayerNotificationCoordinator extends ChangeNotifier
   void _onNotificationPayload(String payload) {
     // Tapping the "your schedule is running out" reminder should trigger an
     // immediate repair rather than silently doing nothing.
-    if (payload.startsWith('coverage|') || payload.startsWith('coverage:')) {
+    if (payload.startsWith('coverage')) {
       unawaited(synchronize(force: true));
     }
   }
@@ -133,6 +131,7 @@ class PrayerNotificationCoordinator extends ChangeNotifier
     await _scheduler.lock.run(() => _preferences.setEnabled(name, value));
     if (_disposed) return;
     notifyListeners();
+    _resetRetry();
     await synchronize(requestPermissions: value);
   }
 
@@ -140,10 +139,12 @@ class PrayerNotificationCoordinator extends ChangeNotifier
     await _scheduler.lock.run(() => _preferences.setAll(value));
     if (_disposed) return;
     notifyListeners();
+    _resetRetry();
     await synchronize(requestPermissions: value);
   }
 
   Future<void> requestExactAlarmAccess() async {
+    _resetRetry();
     try {
       await _gateway.requestExactAlarmPermission();
       await synchronize(force: true);
@@ -156,12 +157,19 @@ class PrayerNotificationCoordinator extends ChangeNotifier
       _gateway.isIgnoringBatteryOptimizations();
 
   Future<void> requestIgnoreBatteryOptimizations() async {
+    _resetRetry();
     try {
       await _gateway.requestIgnoreBatteryOptimizations();
       await synchronize(force: true);
     } catch (e) {
       _failed(e);
     }
+  }
+
+  void _resetRetry() {
+    _attempt = 0;
+    _retry?.cancel();
+    _retry = null;
   }
 
   Future<bool> scheduleLockScreenTest({
@@ -243,9 +251,7 @@ class PrayerNotificationCoordinator extends ChangeNotifier
               result.syncState == PrayerNotificationSyncState.failed) {
             _scheduleRetry();
           } else {
-            _attempt = 0;
-            _retry?.cancel();
-            _retry = null;
+            _resetRetry();
           }
         } catch (e) {
           _failed(e);

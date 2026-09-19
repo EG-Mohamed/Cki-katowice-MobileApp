@@ -254,7 +254,7 @@ class NotificationService implements NotificationGateway {
     await _plugin.zonedSchedule(
       id: id,
       scheduledDate: when,
-      notificationDetails: payload.startsWith('coverage:')
+      notificationDetails: payload.startsWith('coverage')
           ? _coverageDetails
           : _details,
       androidScheduleMode: exact
